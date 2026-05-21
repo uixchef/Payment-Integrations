@@ -1,4 +1,8 @@
+"use client"
+
 import Image from "next/image"
+import { ExtraCountBadge } from "@/components/integrations/extra-count-badge"
+import { useIntegrationCountries } from "@/components/integrations/integration-countries-context"
 import { INTEGRATION_ASSETS, flagAsset } from "@/lib/integration-assets"
 import type { IntegrationItem } from "@/lib/integrations-data"
 import { cn } from "@/lib/utils"
@@ -40,27 +44,6 @@ function FlagAvatar({
   )
 }
 
-function ExtraCountAvatar({
-  count,
-  index,
-}: {
-  count: number
-  index: number
-}) {
-  return (
-    <span
-      className="relative flex h-6 shrink-0 items-center justify-center rounded-full bg-[#f2f4f7] px-1.5 text-xs font-medium leading-[17px] text-[#475467]"
-      style={{ zIndex: index + 1 }}
-    >
-      <span
-        className="pointer-events-none absolute inset-0 rounded-full border-2 border-solid border-[var(--card-surface-color,white)] transition-colors"
-        aria-hidden
-      />
-      +{count}
-    </span>
-  )
-}
-
 function GlobeIcon({ variant }: { variant: "earth" | "public" }) {
   const src =
     variant === "public"
@@ -89,10 +72,16 @@ function GlobeIcon({ variant }: { variant: "earth" | "public" }) {
 function FlagStack({
   flags,
   extraCount,
+  tooltipFlags,
+  integrationId,
 }: {
   flags: string[]
   extraCount?: number
+  tooltipFlags?: string[]
+  integrationId: string
 }) {
+  const { openCountriesPanel } = useIntegrationCountries()
+
   return (
     <div className="isolate flex shrink-0 items-center">
       <div className="flex shrink-0 items-start">
@@ -105,7 +94,12 @@ function FlagStack({
           />
         ))}
         {extraCount != null ? (
-          <ExtraCountAvatar count={extraCount} index={flags.length} />
+          <ExtraCountBadge
+            count={extraCount}
+            tooltipFlags={tooltipFlags}
+            index={flags.length}
+            onViewAll={() => openCountriesPanel(integrationId)}
+          />
         ) : null}
       </div>
     </div>
@@ -157,7 +151,12 @@ export function IntegrationAvailability({ item }: { item: IntegrationItem }) {
   if (availability.regionLabel) {
     return (
       <div className="flex w-full items-center gap-0.5">
-        <FlagStack flags={availability.flags} extraCount={availability.extraCount} />
+        <FlagStack
+          flags={availability.flags}
+          extraCount={availability.extraCount}
+          tooltipFlags={availability.tooltipFlags}
+          integrationId={item.id}
+        />
         <span className="shrink-0 text-base font-medium leading-6 text-[#475467]">
           ,
         </span>
@@ -168,7 +167,12 @@ export function IntegrationAvailability({ item }: { item: IntegrationItem }) {
 
   return (
     <div className="flex w-full items-center">
-      <FlagStack flags={availability.flags} extraCount={availability.extraCount} />
+      <FlagStack
+        flags={availability.flags}
+        extraCount={availability.extraCount}
+        tooltipFlags={availability.tooltipFlags}
+        integrationId={item.id}
+      />
     </div>
   )
 }

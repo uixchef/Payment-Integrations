@@ -3,7 +3,7 @@ import { INTEGRATION_ASSETS } from "@/lib/integration-assets"
 export type IntegrationAvailability =
   | { kind: "global"; label: string }
   | { kind: "region"; label: string }
-  | { kind: "flags"; flags: string[]; extraCount?: number; regionLabel?: string }
+  | { kind: "flags"; flags: string[]; extraCount?: number; tooltipFlags?: string[]; regionLabel?: string }
   | { kind: "location"; label: string }
 
 export type IntegrationItem = {

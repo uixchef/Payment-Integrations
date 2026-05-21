@@ -140,6 +140,22 @@ nextjs-portal {
   top: auto !important;
 }
 
+/* Modal overlays must cover the full viewport when portaled through nextjs-portal. */
+nextjs-portal:has([role="dialog"]) {
+  inset: 0 !important;
+  left: 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  pointer-events: none;
+}
+
+nextjs-portal:has([role="dialog"]) > * {
+  pointer-events: auto;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
