@@ -13,132 +13,145 @@ export type IntegrationCountry = {
   code: string
 }
 
-/** NMI merchant countries — Figma 2284:57652 (61 rows). */
+/**
+ * NMI merchant countries (50 total).
+ * Source: HighLevel NMI country list — major acquiring regions across six continents.
+ */
 const NMI_COUNTRIES: IntegrationCountry[] = [
   { continent: "Africa", code: "EG" },
   { continent: "Africa", code: "ZA" },
   { continent: "Africa", code: "MA" },
   { continent: "Africa", code: "NG" },
   { continent: "Africa", code: "KE" },
-  { continent: "Africa", code: "GH" },
-  { continent: "Africa", code: "TZ" },
-  { continent: "Africa", code: "UG" },
-  { continent: "Africa", code: "DZ" },
-  { continent: "Africa", code: "ET" },
-  { continent: "Africa", code: "SN" },
+  { continent: "Asia", code: "AE" },
+  { continent: "Asia", code: "HK" },
+  { continent: "Asia", code: "ID" },
+  { continent: "Asia", code: "IL" },
   { continent: "Asia", code: "IN" },
   { continent: "Asia", code: "JP" },
-  { continent: "Asia", code: "CN" },
-  { continent: "Asia", code: "SG" },
+  { continent: "Asia", code: "KR" },
   { continent: "Asia", code: "MY" },
   { continent: "Asia", code: "PH" },
-  { continent: "Asia", code: "ID" },
-  { continent: "Asia", code: "TH" },
-  { continent: "Asia", code: "KR" },
-  { continent: "Asia", code: "AE" },
   { continent: "Asia", code: "SA" },
-  { continent: "Asia", code: "IL" },
-  { continent: "Europe", code: "GB" },
+  { continent: "Asia", code: "SG" },
+  { continent: "Asia", code: "TH" },
+  { continent: "Asia", code: "VN" },
+  { continent: "Europe", code: "AT" },
+  { continent: "Europe", code: "BE" },
+  { continent: "Europe", code: "CH" },
   { continent: "Europe", code: "DE" },
-  { continent: "Europe", code: "FR" },
+  { continent: "Europe", code: "DK" },
   { continent: "Europe", code: "ES" },
+  { continent: "Europe", code: "FI" },
+  { continent: "Europe", code: "FR" },
+  { continent: "Europe", code: "GB" },
+  { continent: "Europe", code: "IE" },
   { continent: "Europe", code: "IT" },
   { continent: "Europe", code: "NL" },
-  { continent: "Europe", code: "BE" },
-  { continent: "Europe", code: "SE" },
   { continent: "Europe", code: "NO" },
-  { continent: "Europe", code: "DK" },
   { continent: "Europe", code: "PL" },
-  { continent: "Europe", code: "AT" },
-  { continent: "Europe", code: "CH" },
-  { continent: "Europe", code: "IE" },
   { continent: "Europe", code: "PT" },
+  { continent: "Europe", code: "SE" },
   { continent: "North America", code: "US" },
   { continent: "North America", code: "CA" },
   { continent: "North America", code: "MX" },
   { continent: "North America", code: "CR" },
-  { continent: "North America", code: "PA" },
-  { continent: "North America", code: "GT" },
   { continent: "North America", code: "DO" },
-  { continent: "North America", code: "JM" },
-  { continent: "North America", code: "PR" },
-  { continent: "North America", code: "SV" },
+  { continent: "North America", code: "GT" },
   { continent: "North America", code: "HN" },
-  { continent: "North America", code: "NI" },
+  { continent: "North America", code: "JM" },
+  { continent: "North America", code: "PA" },
   { continent: "Oceania", code: "AU" },
   { continent: "Oceania", code: "NZ" },
-  { continent: "Oceania", code: "FJ" },
-  { continent: "Oceania", code: "PG" },
-  { continent: "Oceania", code: "WS" },
-  { continent: "South America", code: "BR" },
   { continent: "South America", code: "AR" },
+  { continent: "South America", code: "BR" },
   { continent: "South America", code: "CL" },
   { continent: "South America", code: "CO" },
   { continent: "South America", code: "PE" },
   { continent: "South America", code: "UY" },
 ]
 
+/**
+ * GoCardless direct-debit collection countries (30 total).
+ * Source: GoCardless Support — SEPA, BACS, BECS, PAD, Autogiro, Betalingsservice, etc.
+ */
 const GOCARDLESS_COUNTRIES: IntegrationCountry[] = [
-  { continent: "Europe", code: "GB" },
-  { continent: "Europe", code: "FR" },
-  { continent: "Europe", code: "ES" },
-  { continent: "Europe", code: "IT" },
-  { continent: "Europe", code: "NL" },
-  { continent: "Europe", code: "DE" },
-  { continent: "Europe", code: "BE" },
-  { continent: "Europe", code: "IE" },
   { continent: "Europe", code: "AT" },
+  { continent: "Europe", code: "BE" },
+  { continent: "Europe", code: "CH" },
+  { continent: "Europe", code: "CY" },
+  { continent: "Europe", code: "DE" },
+  { continent: "Europe", code: "DK" },
+  { continent: "Europe", code: "EE" },
+  { continent: "Europe", code: "ES" },
+  { continent: "Europe", code: "FI" },
+  { continent: "Europe", code: "FR" },
+  { continent: "Europe", code: "GB" },
+  { continent: "Europe", code: "GR" },
+  { continent: "Europe", code: "IE" },
+  { continent: "Europe", code: "IS" },
+  { continent: "Europe", code: "IT" },
+  { continent: "Europe", code: "LT" },
+  { continent: "Europe", code: "LU" },
+  { continent: "Europe", code: "LV" },
+  { continent: "Europe", code: "MT" },
+  { continent: "Europe", code: "NL" },
+  { continent: "Europe", code: "NO" },
   { continent: "Europe", code: "PT" },
   { continent: "Europe", code: "SE" },
-  { continent: "Europe", code: "DK" },
-  { continent: "Europe", code: "FI" },
-  { continent: "Europe", code: "PL" },
-  { continent: "Europe", code: "CH" },
-  { continent: "Europe", code: "NO" },
+  { continent: "Europe", code: "SI" },
+  { continent: "Europe", code: "SK" },
+  { continent: "North America", code: "CA" },
+  { continent: "North America", code: "US" },
+  { continent: "Oceania", code: "AU" },
+  { continent: "Oceania", code: "NZ" },
+  { continent: "Africa", code: "ZA" },
 ]
 
+/**
+ * Square supported merchant countries (8 total).
+ * Source: developer.squareup.com — Square Payments international availability.
+ */
 const SQUARE_COUNTRIES: IntegrationCountry[] = [
+  { continent: "North America", code: "US" },
+  { continent: "North America", code: "CA" },
+  { continent: "Europe", code: "GB" },
+  { continent: "Europe", code: "IE" },
+  { continent: "Europe", code: "FR" },
+  { continent: "Europe", code: "ES" },
+  { continent: "Asia", code: "JP" },
+  { continent: "Oceania", code: "AU" },
+]
+
+/**
+ * Authorize.Net supported merchant countries (3 total).
+ * Source: Zoho Checkout / Authorize.Net Support — US, CA, AU only.
+ * Note: no extra-count badge — full list fits on the card.
+ */
+const AUTHORIZE_NET_COUNTRIES: IntegrationCountry[] = [
+  { continent: "North America", code: "US" },
+  { continent: "North America", code: "CA" },
+  { continent: "Oceania", code: "AU" },
+]
+
+/**
+ * Clover supported merchant countries (13 total).
+ * Source: docs.clover.com — multi-market launch regions.
+ */
+const CLOVER_COUNTRIES: IntegrationCountry[] = [
   { continent: "North America", code: "US" },
   { continent: "North America", code: "CA" },
   { continent: "North America", code: "MX" },
   { continent: "Europe", code: "GB" },
-  { continent: "Europe", code: "FR" },
-  { continent: "Europe", code: "ES" },
-  { continent: "Europe", code: "IE" },
-  { continent: "Asia", code: "JP" },
-  { continent: "Oceania", code: "AU" },
-]
-
-const AUTHORIZE_NET_COUNTRIES: IntegrationCountry[] = [
-  { continent: "North America", code: "US" },
-  { continent: "North America", code: "CA" },
-  { continent: "Europe", code: "GB" },
-  { continent: "Europe", code: "DE" },
-  { continent: "Europe", code: "FR" },
-  { continent: "Oceania", code: "AU" },
-  { continent: "Asia", code: "IN" },
-  { continent: "Asia", code: "JP" },
-  { continent: "South America", code: "AR" },
-  { continent: "South America", code: "UY" },
-]
-
-const CLOVER_COUNTRIES: IntegrationCountry[] = [
-  { continent: "North America", code: "US" },
-  { continent: "North America", code: "CA" },
-  { continent: "Asia", code: "IN" },
-  { continent: "Africa", code: "GN" },
-  { continent: "South America", code: "UY" },
-  { continent: "Asia", code: "KG" },
-  { continent: "Europe", code: "GB" },
-  { continent: "Europe", code: "DE" },
-  { continent: "Europe", code: "FR" },
-  { continent: "Europe", code: "IT" },
-  { continent: "Europe", code: "ES" },
-  { continent: "Europe", code: "NL" },
   { continent: "Europe", code: "IE" },
   { continent: "Europe", code: "AT" },
-  { continent: "Europe", code: "BE" },
-  { continent: "Europe", code: "PT" },
+  { continent: "Europe", code: "DE" },
+  { continent: "Europe", code: "NL" },
+  { continent: "Asia", code: "HK" },
+  { continent: "Asia", code: "SG" },
+  { continent: "Oceania", code: "AU" },
+  { continent: "South America", code: "AR" },
+  { continent: "South America", code: "BR" },
 ]
 
 export const INTEGRATION_COUNTRIES: Record<string, IntegrationCountry[]> = {

@@ -40,7 +40,7 @@ export const INTEGRATIONS: IntegrationItem[] = [
     availability: {
       kind: "flags",
       flags: ["US", "GB", "CA", "AU", "DE", "FR"],
-      extraCount: 10,
+      extraCount: 44,
     },
     verified: true,
     logo: INTEGRATION_ASSETS.logos.nmi,
@@ -52,7 +52,7 @@ export const INTEGRATIONS: IntegrationItem[] = [
     availability: {
       kind: "flags",
       flags: ["GB", "FR", "ES", "IT", "NL", "DE"],
-      extraCount: 10,
+      extraCount: 24,
       regionLabel: "Europe",
     },
     verified: true,
@@ -65,7 +65,7 @@ export const INTEGRATIONS: IntegrationItem[] = [
     availability: {
       kind: "flags",
       flags: ["US", "CA", "GB", "AU", "JP", "FR"],
-      extraCount: 10,
+      extraCount: 2,
     },
     verified: true,
     logo: INTEGRATION_ASSETS.logos.square,
@@ -76,8 +76,7 @@ export const INTEGRATIONS: IntegrationItem[] = [
     methods: "Cards · Bank transfers",
     availability: {
       kind: "flags",
-      flags: ["US", "GB", "CA", "AU", "DE", "FR"],
-      extraCount: 10,
+      flags: ["US", "CA", "AU"],
     },
     verified: true,
     logo: INTEGRATION_ASSETS.logos.authorizeNet,
@@ -184,9 +183,8 @@ export const INTEGRATIONS: IntegrationItem[] = [
     methods: "Cards · Wallets",
     availability: {
       kind: "flags",
-      flags: ["US", "IN", "CA", "GN", "UY", "KG"],
-      extraCount: 10,
-      regionLabel: "Europe",
+      flags: ["US", "GB", "CA", "AU", "DE", "NL"],
+      extraCount: 7,
     },
     logo: INTEGRATION_ASSETS.logos.clover,
   },
