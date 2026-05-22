@@ -95,7 +95,6 @@ export const INTEGRATIONS: IntegrationItem[] = [
     },
     verified: true,
     logo: INTEGRATION_ASSETS.logos.manual,
-    connected: true,
   },
   {
     id: "razorpay",
