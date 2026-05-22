@@ -84,7 +84,7 @@ export function ConfirmationDialog({
             "duration-200"
           )}
         >
-          <div className="flex w-full items-center gap-2 px-4 pt-3">
+          <div className="flex w-full items-center gap-2 px-4 pt-4">
             <div className="flex min-w-0 flex-1 items-center gap-2">
               <AlertTriangle
                 className={cn("size-6 shrink-0", styles.iconColor)}
