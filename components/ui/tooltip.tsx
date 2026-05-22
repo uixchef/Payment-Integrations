@@ -5,7 +5,7 @@ import { Tooltip as TooltipPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
-/** Figma Tooltip (2284:57173) — gray/900 surface, 14/20 white text, 6px arrow. */
+/** Figma Tooltip (2724:34451) — gray/900 surface, Inter Medium 14/20 white text, 16x6 arrow. */
 
 function TooltipProvider({
   delayDuration = 200,
@@ -38,7 +38,7 @@ function TooltipContent({
       <TooltipPrimitive.Content
         sideOffset={sideOffset}
         className={cn(
-          "z-50 rounded bg-[#101828] px-2 py-2 text-sm font-medium leading-5 text-white",
+          "z-[200] rounded bg-[#101828] px-2 py-2 font-[family-name:var(--font-inter)] text-sm font-medium leading-5 text-white",
           "shadow-[0_4px_6px_-2px_rgba(16,24,40,0.03),0_12px_16px_-4px_rgba(16,24,40,0.08)]",
           "data-[state=delayed-open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:fade-out-0 data-[state=delayed-open]:fade-in-0",

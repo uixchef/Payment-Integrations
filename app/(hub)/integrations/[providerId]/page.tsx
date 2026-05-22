@@ -2,9 +2,15 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { IntegrationSettingsShell } from "@/components/integrations/settings/integration-settings-shell"
 import { ManualPaymentSettingsShell } from "@/components/integrations/settings/manual-payment/manual-payment-settings-shell"
+import { StripeSettingsShell } from "@/components/integrations/settings/stripe/stripe-settings-shell"
 import { INTEGRATIONS } from "@/lib/integrations-data"
 
-const SUPPORTED_SETTINGS = new Set(["razorpay", "authorize-net", "manual"])
+const SUPPORTED_SETTINGS = new Set([
+  "razorpay",
+  "authorize-net",
+  "manual",
+  "stripe",
+])
 
 type Params = Promise<{ providerId: string }>
 
@@ -46,6 +52,10 @@ export default async function IntegrationSettingsPage({
 
   if (providerId === "manual") {
     return <ManualPaymentSettingsShell />
+  }
+
+  if (providerId === "stripe") {
+    return <StripeSettingsShell item={item} />
   }
 
   return <IntegrationSettingsShell item={item} />

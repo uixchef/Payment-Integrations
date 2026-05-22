@@ -33,6 +33,8 @@ export type ConfirmationDialogProps = {
   confirmLabel: string
   cancelLabel?: string
   variant?: ConfirmationDialogVariant
+  /** Override the default header icon (defaults to AlertTriangle). */
+  icon?: React.ReactNode
   onConfirm: () => void
   onCancel?: () => void
 }
@@ -45,6 +47,7 @@ export function ConfirmationDialog({
   confirmLabel,
   cancelLabel = "Cancel",
   variant = "warning",
+  icon,
   onConfirm,
   onCancel,
 }: ConfirmationDialogProps) {
@@ -86,11 +89,23 @@ export function ConfirmationDialog({
         >
           <div className="flex w-full items-center gap-2 px-4 pt-4">
             <div className="flex min-w-0 flex-1 items-center gap-2">
-              <AlertTriangle
-                className={cn("size-6 shrink-0", styles.iconColor)}
-                strokeWidth={1.75}
-                aria-hidden
-              />
+              {icon ? (
+                <span
+                  className={cn(
+                    "flex size-6 shrink-0 items-center justify-center",
+                    styles.iconColor
+                  )}
+                  aria-hidden
+                >
+                  {icon}
+                </span>
+              ) : (
+                <AlertTriangle
+                  className={cn("size-6 shrink-0", styles.iconColor)}
+                  strokeWidth={1.75}
+                  aria-hidden
+                />
+              )}
               <DialogPrimitive.Title className="truncate font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-[#101828]">
                 {title}
               </DialogPrimitive.Title>
@@ -105,9 +120,9 @@ export function ConfirmationDialog({
 
           <div className="flex w-full flex-col p-4">
             <DialogPrimitive.Description asChild>
-              <p className="font-[family-name:var(--font-inter)] text-base font-normal leading-6 text-[#475467]">
+              <div className="space-y-4 font-[family-name:var(--font-inter)] text-base font-normal leading-6 text-[#475467]">
                 {description}
-              </p>
+              </div>
             </DialogPrimitive.Description>
           </div>
 

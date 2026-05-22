@@ -17,7 +17,12 @@ import type { IntegrationItem } from "@/lib/integrations-data"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 
-const PROVIDERS_WITH_SETTINGS = new Set(["razorpay", "authorize-net", "manual"])
+const PROVIDERS_WITH_SETTINGS = new Set([
+  "razorpay",
+  "authorize-net",
+  "manual",
+  "stripe",
+])
 
 const TABLE_COLUMNS =
   "grid grid-cols-[minmax(240px,1.15fr)_minmax(220px,1fr)_minmax(220px,1fr)_120px]"

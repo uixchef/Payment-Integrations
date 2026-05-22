@@ -9,7 +9,12 @@ import { useIntegrationStatus } from "@/lib/integration-status-context"
 import type { IntegrationItem } from "@/lib/integrations-data"
 import { cn } from "@/lib/utils"
 
-const PROVIDERS_WITH_SETTINGS = new Set(["razorpay", "authorize-net", "manual"])
+const PROVIDERS_WITH_SETTINGS = new Set([
+  "razorpay",
+  "authorize-net",
+  "manual",
+  "stripe",
+])
 
 export function IntegrationCard({ item }: { item: IntegrationItem }) {
   const { isConnected, isDefault } = useIntegrationStatus()
