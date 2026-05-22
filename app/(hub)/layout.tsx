@@ -3,6 +3,10 @@ import { IntegrationCountriesProvider } from "@/components/integrations/integrat
 import { IntegrationStatusProvider } from "@/lib/integration-status-context";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
+// Hub shell reads `useSearchParams()` (Topbar tabs, integrations canvas tab),
+// so the entire segment must render dynamically — no static prerender.
+export const dynamic = "force-dynamic";
+
 export default function HubLayout({
   children,
 }: {
