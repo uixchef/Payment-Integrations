@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowLeft, ChevronDown, Settings2 } from "lucide-react"
+import { ArrowLeft, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import {
@@ -34,8 +34,6 @@ const PROVIDER_DOCS: Record<string, string> = {
     "https://help.gohighlevel.com/support/solutions/articles/48000980324-authorize-net-integration",
 }
 
-const PROVIDERS_WITH_PAYMENT_METHODS = new Set(["authorize-net"])
-
 function SubHeader({
   item,
   isConnected,
@@ -48,7 +46,6 @@ function SubHeader({
   onSetAsDefault: () => void
 }) {
   const logo = item.logo ?? INTEGRATION_ASSETS.logos.placeholder
-  const showPaymentMethods = PROVIDERS_WITH_PAYMENT_METHODS.has(item.id)
 
   return (
     <header className="flex h-[62px] shrink-0 items-center gap-3 border-b border-[#d0d5dd] bg-white px-4">
@@ -93,20 +90,6 @@ function SubHeader({
         >
           Set as default
         </Button>
-        {showPaymentMethods ? (
-          <Button
-            type="button"
-            variant="outline"
-            className={cn(
-              "h-9 gap-2 rounded px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 shadow-none",
-              "border-[#84adff] bg-white text-[#004eeb] shadow-[0_1px_2px_rgba(16,24,40,0.05)]",
-              "hover:border-[#84adff] hover:bg-[#f5f8ff] hover:text-[#004eeb]"
-            )}
-          >
-            <Settings2 className="size-4" strokeWidth={1.75} aria-hidden />
-            Payment methods
-          </Button>
-        ) : null}
       </div>
     </header>
   )
