@@ -10,9 +10,11 @@ import type { IntegrationItem } from "@/lib/integrations-data"
 export function IntegrationProviderIdentity({
   item,
   nameClassName = "truncate text-base font-medium leading-6 text-[#475467]",
+  isDefault = false,
 }: {
   item: IntegrationItem
   nameClassName?: string
+  isDefault?: boolean
 }) {
   const logoSrc =
     item.logo ??
@@ -45,6 +47,14 @@ export function IntegrationProviderIdentity({
       </div>
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <span className={nameClassName}>{item.name}</span>
+        {isDefault ? (
+          <span
+            className="inline-flex h-6 shrink-0 items-center rounded-xl bg-[#eff4ff] px-2 font-[family-name:var(--font-inter)] text-sm font-medium leading-5 text-[#004eeb]"
+            aria-label="Default payment provider"
+          >
+            Default
+          </span>
+        ) : null}
         {item.verified ? (
           <Tooltip>
             <TooltipTrigger asChild>

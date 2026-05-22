@@ -1,5 +1,7 @@
 import { INTEGRATION_ASSETS } from "@/lib/integration-assets"
 
+export type IntegrationStatusTab = "connected" | "all"
+
 export type IntegrationAvailability =
   | { kind: "global"; label: string }
   | { kind: "region"; label: string }
@@ -14,6 +16,7 @@ export type IntegrationItem = {
   verified?: boolean
   logo?: string
   usePlaceholder?: boolean
+  connected?: boolean
 }
 
 export const INTEGRATIONS: IntegrationItem[] = [
@@ -80,6 +83,7 @@ export const INTEGRATIONS: IntegrationItem[] = [
     },
     verified: true,
     logo: INTEGRATION_ASSETS.logos.authorizeNet,
+    connected: true,
   },
   {
     id: "manual",
@@ -91,6 +95,7 @@ export const INTEGRATIONS: IntegrationItem[] = [
     },
     verified: true,
     logo: INTEGRATION_ASSETS.logos.manual,
+    connected: true,
   },
   {
     id: "razorpay",
@@ -98,6 +103,7 @@ export const INTEGRATIONS: IntegrationItem[] = [
     methods: "Cards · Wallets · Bank transfers · Buy now, pay later",
     availability: { kind: "flags", flags: ["IN"] },
     logo: INTEGRATION_ASSETS.logos.razorpay,
+    connected: true,
   },
   {
     id: "easy-pay-direct",
@@ -189,3 +195,23 @@ export const INTEGRATIONS: IntegrationItem[] = [
     logo: INTEGRATION_ASSETS.logos.clover,
   },
 ]
+
+export function getConnectedCount(items: IntegrationItem[]): number {
+  return items.filter((item) => item.connected).length
+}
+
+export function filterByStatusTab(
+  items: IntegrationItem[],
+  tab: IntegrationStatusTab
+): IntegrationItem[] {
+  if (tab === "connected") {
+    return items.filter((item) => item.connected)
+  }
+  return items
+}
+
+export function parseStatusTab(
+  value: string | null | undefined
+): IntegrationStatusTab {
+  return value === "connected" ? "connected" : "all"
+}

@@ -6,7 +6,14 @@ import {
   HelpCircle,
   Bell,
 } from "lucide-react"
-import { usePathname } from "next/navigation"
+import Link from "next/link"
+import { usePathname, useSearchParams } from "next/navigation"
+import {
+  parseStatusTab,
+  type IntegrationStatusTab,
+} from "@/lib/integrations-data"
+import { useIntegrationStatus } from "@/lib/integration-status-context"
+import { INTEGRATIONS } from "@/lib/integrations-data"
 import { cn } from "@/lib/utils"
 
 function Settings04Icon({ className }: { className?: string }) {
@@ -45,12 +52,35 @@ function getActiveTabId(
   return "overview"
 }
 
+/**
+ * Settings sub-pages (e.g. /integrations/razorpay) render their own page header
+ * and don't need the global "Payment integrations" sub-bar.
+ */
+function isIntegrationSettingsRoute(pathname: string): boolean {
+  return (
+    pathname.startsWith("/integrations/") && pathname !== "/integrations"
+  )
+}
+
+const STATUS_TABS: { id: IntegrationStatusTab; label: string }[] = [
+  { id: "connected", label: "Connected" },
+  { id: "all", label: "All providers" },
+]
+
 export function Topbar() {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const activeTabId = getActiveTabId(pathname)
+  const showIntegrationsSubHeader = !isIntegrationSettingsRoute(pathname)
+  const activeStatusTab = parseStatusTab(searchParams.get("status"))
+  const { isConnected } = useIntegrationStatus()
+  const connectedCount = INTEGRATIONS.reduce(
+    (count, item) => (isConnected(item.id) ? count + 1 : count),
+    0
+  )
 
   return (
-    <header className="w-full min-w-0 border-b border-[#d0d5dd] bg-white">
+    <header className="w-full min-w-0 bg-white">
       <div className="flex w-full min-w-0 flex-col gap-0">
         {/* Row 1 — Primary header */}
         <div className="relative border-b border-[#d0d5dd] bg-white">
@@ -128,24 +158,80 @@ export function Topbar() {
           </div>
         </div>
 
-        {/* Row 2 — Figma Header (2284:57246) */}
-        <div className="flex h-[62px] w-full items-center gap-3 bg-white px-4">
-          <div className="flex shrink-0 items-center gap-1">
-            <h2 className="whitespace-nowrap font-[family-name:var(--font-inter)] text-base font-semibold leading-6 tracking-normal text-[#101828]">
-              Payment integrations
-            </h2>
-          </div>
+        {/* Row 2 — Figma Header (3334:36853). Hidden on integration settings sub-routes.
+            Tabs only appear once at least one provider is connected. */}
+        {showIntegrationsSubHeader ? (
+          <div className="flex h-[62px] w-full items-center gap-3 border-b border-[#d0d5dd] bg-white px-4">
+            <div className="flex shrink-0 items-center gap-1">
+              <h2 className="whitespace-nowrap font-[family-name:var(--font-inter)] text-base font-semibold leading-6 tracking-normal text-[#101828]">
+                Payment integrations
+              </h2>
+            </div>
 
-          <div className="flex min-h-0 min-w-0 flex-1 items-center justify-end overflow-hidden">
-            <button
-              type="button"
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded border border-[#155eef] bg-[#155eef] px-2.5 py-1.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-white shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors hover:bg-[#004eeb] hover:border-[#004eeb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155eef]/40"
-            >
-              <Settings04Icon className="text-white" />
-              Configure providers
-            </button>
+            {connectedCount > 0 ? (
+              <nav
+                aria-label="Integration status"
+                className="flex min-h-0 min-w-0 flex-1 items-stretch gap-2 self-stretch overflow-hidden"
+              >
+                {STATUS_TABS.map((tab) => {
+                  const isActive = tab.id === activeStatusTab
+                  const href =
+                    tab.id === "connected"
+                      ? "/integrations?status=connected"
+                      : "/integrations"
+
+                  return (
+                    <Link
+                      key={tab.id}
+                      href={href}
+                      aria-current={isActive ? "page" : undefined}
+                      className={cn(
+                        "inline-flex shrink-0 items-center gap-1 border-b-2 px-2 font-[family-name:var(--font-inter)] text-base leading-6 outline-none transition-colors",
+                        "focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#84adff]",
+                        isActive
+                          ? "border-[#004eeb] font-semibold text-[#004eeb]"
+                          : "border-transparent font-medium text-[#475467] hover:text-[#101828]"
+                      )}
+                    >
+                      <span className="whitespace-nowrap">{tab.label}</span>
+                      {tab.id === "connected" ? (
+                        <span
+                          className={cn(
+                            "inline-flex min-h-[18px] items-center justify-center rounded px-1.5 font-[family-name:var(--font-inter)] text-sm font-medium leading-5",
+                            isActive
+                              ? "bg-[#eff4ff] text-[#004eeb]"
+                              : "bg-[#f2f4f7] text-[#475467]"
+                          )}
+                          aria-label={`${connectedCount} connected providers`}
+                        >
+                          {connectedCount}
+                        </span>
+                      ) : null}
+                    </Link>
+                  )
+                })}
+              </nav>
+            ) : (
+              <div className="min-h-0 min-w-0 flex-1 self-stretch" aria-hidden />
+            )}
+
+            <div className="flex shrink-0 items-center gap-2 self-stretch py-3">
+              {connectedCount > 0 ? (
+                <span
+                  aria-hidden
+                  className="h-full w-px shrink-0 bg-[#eaecf0]"
+                />
+              ) : null}
+              <button
+                type="button"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded border border-[#155eef] bg-[#155eef] px-2.5 py-1.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-white shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors hover:bg-[#004eeb] hover:border-[#004eeb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155eef]/40"
+              >
+                <Settings04Icon className="text-white" />
+                Configure providers
+              </button>
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
     </header>
   )

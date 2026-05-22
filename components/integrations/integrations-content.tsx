@@ -15,17 +15,23 @@ import {
   getVisibleFilterTags,
   type IntegrationFilterSelections,
 } from "@/lib/filter-integrations"
-import { INTEGRATIONS } from "@/lib/integrations-data"
+import {
+  INTEGRATIONS,
+  type IntegrationStatusTab,
+} from "@/lib/integrations-data"
+import { useIntegrationStatus } from "@/lib/integration-status-context"
 import { cn } from "@/lib/utils"
 
 type IntegrationsContentProps = {
   view: IntegrationsViewMode
   onViewChange: (view: IntegrationsViewMode) => void
+  statusTab: IntegrationStatusTab
 }
 
 export function IntegrationsContent({
   view,
   onViewChange,
+  statusTab,
 }: IntegrationsContentProps) {
   const [openFilterId, setOpenFilterId] = useState<FilterType | null>(null)
   const [openFilterAnchor, setOpenFilterAnchor] =
@@ -60,10 +66,15 @@ export function IntegrationsContent({
     [selections, pinnedFilterIds]
   )
 
-  const filteredIntegrations = useMemo(
-    () => filterIntegrations(INTEGRATIONS, selections),
-    [selections]
-  )
+  const { isConnected } = useIntegrationStatus()
+
+  const filteredIntegrations = useMemo(() => {
+    const byStatus =
+      statusTab === "connected"
+        ? INTEGRATIONS.filter((item) => isConnected(item.id))
+        : INTEGRATIONS
+    return filterIntegrations(byStatus, selections)
+  }, [selections, statusTab, isConnected])
 
   const pinFilter = useCallback((filterId: FilterType) => {
     setPinnedFilterIds((current) =>

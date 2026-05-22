@@ -1,16 +1,29 @@
 "use client"
 
 import { useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { IntegrationsContent } from "@/components/integrations/integrations-content"
 import { OnboardingBanner } from "@/components/integrations/onboarding-banner"
+import { INTEGRATIONS, parseStatusTab } from "@/lib/integrations-data"
+import { useIntegrationStatus } from "@/lib/integration-status-context"
 import { cn } from "@/lib/utils"
 
 /**
  * Inner canvas — Figma node 2284:57152.
  * Banner, filter/search toolbar, and integration card grid / table.
+ * Status tab (Connected / All) is driven by the `status` search param so
+ * the Topbar sub-header tabs stay in sync with the grid. If zero providers
+ * are currently connected, the Connected tab is hidden in the Topbar and
+ * we fall back to All here so the URL doesn't strand the user.
  */
 export function IntegrationsCanvas() {
   const [view, setView] = useState<"grid" | "list">("grid")
+  const searchParams = useSearchParams()
+  const requestedTab = parseStatusTab(searchParams.get("status"))
+  const { isConnected } = useIntegrationStatus()
+  const hasAnyConnected = INTEGRATIONS.some((item) => isConnected(item.id))
+  const statusTab =
+    requestedTab === "connected" && !hasAnyConnected ? "all" : requestedTab
 
   return (
     <div
@@ -29,7 +42,11 @@ export function IntegrationsCanvas() {
         <div className="shrink-0">
           <OnboardingBanner />
         </div>
-        <IntegrationsContent view={view} onViewChange={setView} />
+        <IntegrationsContent
+          view={view}
+          onViewChange={setView}
+          statusTab={statusTab}
+        />
       </div>
     </div>
   )

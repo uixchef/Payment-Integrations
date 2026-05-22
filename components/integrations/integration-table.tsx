@@ -12,8 +12,12 @@ import {
 import type { FilterType } from "@/lib/integration-filters"
 import type { IntegrationFilterSelections } from "@/lib/filter-integrations"
 import { INTEGRATION_ASSETS } from "@/lib/integration-assets"
+import { useIntegrationStatus } from "@/lib/integration-status-context"
 import type { IntegrationItem } from "@/lib/integrations-data"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
+
+const PROVIDERS_WITH_SETTINGS = new Set(["razorpay", "authorize-net", "manual"])
 
 const TABLE_COLUMNS =
   "grid grid-cols-[minmax(240px,1.15fr)_minmax(220px,1fr)_minmax(220px,1fr)_120px]"
@@ -130,6 +134,14 @@ function TableHeaderCell({
 }
 
 function TableRow({ item }: { item: IntegrationItem }) {
+  const { isConnected, isDefault } = useIntegrationStatus()
+  const connected = isConnected(item.id)
+  const defaultProvider = isDefault(item.id)
+  const hasSettings = PROVIDERS_WITH_SETTINGS.has(item.id)
+  const ctaLabel = connected ? "Manage" : "Connect"
+  const ctaClassName =
+    "rounded border-[#d0d5dd] bg-white px-2.5 text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.05)] hover:border-[#84adff] hover:bg-white hover:text-[#004eeb]"
+
   return (
     <div
       className={cn(
@@ -138,7 +150,7 @@ function TableRow({ item }: { item: IntegrationItem }) {
       )}
     >
       <div className="flex h-16 items-center border-b border-r border-[#d0d5dd] px-3 py-2">
-        <IntegrationProviderIdentity item={item} />
+        <IntegrationProviderIdentity item={item} isDefault={defaultProvider} />
       </div>
 
       <div className="flex h-16 items-center border-b border-r border-[#d0d5dd] px-3 py-2">
@@ -152,13 +164,15 @@ function TableRow({ item }: { item: IntegrationItem }) {
       </div>
 
       <div className="flex h-16 items-center border-b border-[#d0d5dd] px-3 py-1.5">
-        <Button
-          type="button"
-          variant="outline"
-          className="rounded border-[#d0d5dd] bg-white px-2.5 text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.05)] hover:border-[#84adff] hover:bg-white hover:text-[#004eeb]"
-        >
-          Connect
-        </Button>
+        {hasSettings ? (
+          <Button asChild variant="outline" className={ctaClassName}>
+            <Link href={`/integrations/${item.id}`}>{ctaLabel}</Link>
+          </Button>
+        ) : (
+          <Button type="button" variant="outline" className={ctaClassName}>
+            {ctaLabel}
+          </Button>
+        )}
       </div>
     </div>
   )

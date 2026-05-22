@@ -1,11 +1,29 @@
+"use client"
+
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { IntegrationAvailability } from "@/components/integrations/integration-availability"
 import { IntegrationProviderIdentity } from "@/components/integrations/integration-provider-identity"
+import { useIntegrationStatus } from "@/lib/integration-status-context"
 import type { IntegrationItem } from "@/lib/integrations-data"
 import { cn } from "@/lib/utils"
 
+const PROVIDERS_WITH_SETTINGS = new Set(["razorpay", "authorize-net", "manual"])
+
 export function IntegrationCard({ item }: { item: IntegrationItem }) {
+  const { isConnected, isDefault } = useIntegrationStatus()
+  const connected = isConnected(item.id)
+  const defaultProvider = isDefault(item.id)
+  const hasSettings = PROVIDERS_WITH_SETTINGS.has(item.id)
+  const ctaLabel = connected ? "Manage" : "Connect"
+
+  const ctaClassName = cn(
+    "w-full rounded border-[#d0d5dd] bg-white px-2.5 text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors",
+    "group-hover:border-[#84adff] group-hover:bg-white group-hover:text-[#004eeb]",
+    "hover:border-[#84adff] hover:bg-white hover:text-[#004eeb]"
+  )
+
   return (
     <article
       className={cn(
@@ -16,6 +34,7 @@ export function IntegrationCard({ item }: { item: IntegrationItem }) {
       <div className="px-4 pt-4">
         <IntegrationProviderIdentity
           item={item}
+          isDefault={defaultProvider}
           nameClassName="min-w-0 flex-1 truncate text-base font-semibold leading-6 text-[#101828]"
         />
       </div>
@@ -30,17 +49,15 @@ export function IntegrationCard({ item }: { item: IntegrationItem }) {
           <IntegrationAvailability item={item} />
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          className={cn(
-            "w-full rounded border-[#d0d5dd] bg-white px-2.5 text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors",
-            "group-hover:border-[#84adff] group-hover:bg-white group-hover:text-[#004eeb]",
-            "hover:border-[#84adff] hover:bg-white hover:text-[#004eeb]"
-          )}
-        >
-          Connect
-        </Button>
+        {hasSettings ? (
+          <Button asChild variant="outline" className={ctaClassName}>
+            <Link href={`/integrations/${item.id}`}>{ctaLabel}</Link>
+          </Button>
+        ) : (
+          <Button type="button" variant="outline" className={ctaClassName}>
+            {ctaLabel}
+          </Button>
+        )}
       </div>
     </article>
   )
