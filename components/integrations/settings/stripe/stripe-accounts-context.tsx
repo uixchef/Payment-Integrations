@@ -3,6 +3,7 @@
 import * as React from "react"
 
 import type { StripeAccount } from "@/components/integrations/settings/stripe/stripe-account-config"
+import { MAX_ACCOUNTS_PER_PROVIDER } from "@/lib/integration-account-limits"
 import {
   createStripeSyncIncomplete,
   type StripeSyncDraft,
@@ -152,12 +153,15 @@ export function StripeAccountsProvider({
     StripeAccountsContextValue["addPendingAccount"]
   >(
     (label) => {
+      if (accounts.length >= MAX_ACCOUNTS_PER_PROVIDER) {
+        return activeAccount ?? accounts[0]
+      }
       const account = newPendingAccount(label, accounts.length + 1)
       setAccounts((current) => [...current, account])
       setActiveAccountId(account.id)
       return account
     },
-    [accounts.length]
+    [accounts, activeAccount, activeAccountId]
   )
 
   const renameActiveAccount = React.useCallback<

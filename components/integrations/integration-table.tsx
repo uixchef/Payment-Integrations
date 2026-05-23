@@ -23,6 +23,7 @@ const PROVIDERS_WITH_SETTINGS = new Set([
   "authorize-net",
   "manual",
   "stripe",
+  "paypal",
 ])
 
 const TABLE_COLUMNS =

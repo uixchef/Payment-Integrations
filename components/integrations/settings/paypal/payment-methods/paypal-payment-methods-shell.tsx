@@ -5,34 +5,36 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import type { IntegrationEnvironment } from "@/components/integrations/settings/integration-settings-fields"
+import { PaymentMethodCountriesPanel } from "@/components/integrations/settings/stripe/payment-methods/payment-method-countries-panel"
+import { StripePaymentMethodsTable } from "@/components/integrations/settings/stripe/payment-methods/stripe-payment-methods-table"
+import { StripePaymentMethodsToolbar } from "@/components/integrations/settings/stripe/payment-methods/stripe-payment-methods-toolbar"
 import { useFilterBarState } from "@/hooks/use-filter-bar-state"
-import { filterStripePaymentMethods } from "@/lib/filter-stripe-payment-methods"
+import { filterPayPalPaymentMethods } from "@/lib/filter-paypal-payment-methods"
 import { INTEGRATION_ASSETS } from "@/lib/integration-assets"
 import type { IntegrationItem } from "@/lib/integrations-data"
+import {
+  countEnabledPayPalPaymentMethods,
+  initialPayPalPaymentMethodEnabledState,
+  PAYPAL_PAYMENT_METHODS,
+  type PayPalPaymentMethodRow,
+} from "@/lib/paypal-payment-methods-data"
 import {
   PMC_DEFAULT_FILTER_SELECTIONS,
   PMC_EMPTY_FILTER_SELECTIONS,
   PMC_FILTER_TYPES,
 } from "@/lib/stripe-payment-method-filters"
 import type { PaymentMethodTableRow } from "@/lib/stripe-payment-methods-data"
-import {
-  STRIPE_PAYMENT_METHODS,
-  countEnabledPaymentMethods,
-  initialPaymentMethodEnabledState,
-  type StripePaymentMethodRow,
-} from "@/lib/stripe-payment-methods-data"
 import { cn } from "@/lib/utils"
-import { PaymentMethodCountriesPanel } from "./payment-method-countries-panel"
-import { StripePaymentMethodsTable } from "./stripe-payment-methods-table"
-import { StripePaymentMethodsToolbar } from "./stripe-payment-methods-toolbar"
 
-export function StripePaymentMethodsShell({ item }: { item: IntegrationItem }) {
-  const logo = item.logo ?? INTEGRATION_ASSETS.logos.stripe
+export function PayPalPaymentMethodsShell({ item }: { item: IntegrationItem }) {
+  const logo = item.logo ?? INTEGRATION_ASSETS.logos.paypal
   const [environment, setEnvironment] = useState<IntegrationEnvironment>("live")
   const [searchQuery, setSearchQuery] = useState("")
-  const [enabledById, setEnabledById] = useState(initialPaymentMethodEnabledState)
+  const [enabledById, setEnabledById] = useState(
+    initialPayPalPaymentMethodEnabledState
+  )
   const [countriesPanelRow, setCountriesPanelRow] =
-    useState<StripePaymentMethodRow | null>(null)
+    useState<PayPalPaymentMethodRow | null>(null)
   const [countriesPanelOpen, setCountriesPanelOpen] = useState(false)
 
   const {
@@ -52,17 +54,17 @@ export function StripePaymentMethodsShell({ item }: { item: IntegrationItem }) {
     initialPinned: ["product-area"],
   })
 
-  const activeCount = countEnabledPaymentMethods(enabledById)
+  const activeCount = countEnabledPayPalPaymentMethods(enabledById)
 
-  const filteredRows = useMemo(() => {
-    const byFilters = filterStripePaymentMethods(STRIPE_PAYMENT_METHODS, selections)
+  const filteredRows = useMemo((): PaymentMethodTableRow[] => {
+    const byFilters = filterPayPalPaymentMethods(PAYPAL_PAYMENT_METHODS, selections)
     const normalized = searchQuery.trim().toLowerCase()
     if (!normalized) return byFilters
     return byFilters.filter((row) => row.name.toLowerCase().includes(normalized))
   }, [searchQuery, selections])
 
   const handleViewAllCountries = (row: PaymentMethodTableRow) => {
-    setCountriesPanelRow(row as StripePaymentMethodRow)
+    setCountriesPanelRow(row as PayPalPaymentMethodRow)
     setCountriesPanelOpen(true)
   }
 
@@ -71,8 +73,8 @@ export function StripePaymentMethodsShell({ item }: { item: IntegrationItem }) {
       <header className="flex h-[62px] shrink-0 items-center border-b border-[#d0d5dd] bg-white px-4">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <Link
-            href="/integrations/stripe"
-            aria-label="Back to Stripe integration settings"
+            href="/integrations/paypal"
+            aria-label="Back to PayPal integration settings"
             className="flex size-6 shrink-0 items-center justify-center rounded text-[#101828] outline-none transition-colors hover:bg-[#f2f4f7] focus-visible:ring-2 focus-visible:ring-[#84adff]"
           >
             <ArrowLeft className="size-5" strokeWidth={1.75} aria-hidden />
@@ -93,7 +95,7 @@ export function StripePaymentMethodsShell({ item }: { item: IntegrationItem }) {
           <div className="flex min-w-0 flex-col gap-0.5">
             <div className="flex min-w-0 items-center gap-2">
               <h1 className="truncate font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-[#101828]">
-                Stripe payment method configuration
+                PayPal payment method configuration
               </h1>
               <span
                 className={cn(

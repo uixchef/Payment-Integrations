@@ -3,10 +3,10 @@
 import Image from "next/image"
 import { CountriesListPanel } from "@/components/integrations/countries-list-panel"
 import { countriesFromCodes } from "@/lib/integration-countries"
-import type { StripePaymentMethodRow } from "@/lib/stripe-payment-methods-data"
+import type { PaymentMethodTableRow } from "@/lib/stripe-payment-methods-data"
 import { getPopularInCountryCodes } from "@/lib/stripe-payment-method-countries"
 
-function PanelHeader({ row }: { row: StripePaymentMethodRow }) {
+function PanelHeader({ row }: { row: PaymentMethodTableRow }) {
   const isSvg = row.icon.endsWith(".svg")
 
   return (
@@ -41,7 +41,7 @@ function PanelHeader({ row }: { row: StripePaymentMethodRow }) {
 }
 
 type PaymentMethodCountriesPanelProps = {
-  row: StripePaymentMethodRow | null
+  row: PaymentMethodTableRow | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }

@@ -28,14 +28,18 @@ export type StripeProductArea =
   | "subscriptions"
   | "terminal"
 
-export type StripePaymentMethodRow = {
+export type PaymentMethodTableRow = {
   id: string
   name: string
   icon: string
-  type: StripePaymentMethodType
+  type: string
   popularIn: PopularInRegion
   productAreas: StripeProductArea[]
   enabled: boolean
+}
+
+export type StripePaymentMethodRow = PaymentMethodTableRow & {
+  type: StripePaymentMethodType
 }
 
 const ALL_AREAS: StripeProductArea[] = [

@@ -13,8 +13,8 @@ import {
   type PmcFilterType,
 } from "@/lib/stripe-payment-method-filters"
 import type {
+  PaymentMethodTableRow,
   PopularInRegion,
-  StripePaymentMethodRow,
 } from "@/lib/stripe-payment-methods-data"
 import { cn } from "@/lib/utils"
 import {
@@ -194,7 +194,7 @@ function PaymentMethodRow({
   onEnabledChange,
   onViewAllCountries,
 }: {
-  row: StripePaymentMethodRow
+  row: PaymentMethodTableRow
   enabled: boolean
   onEnabledChange: (next: boolean) => void
   onViewAllCountries?: () => void
@@ -251,10 +251,10 @@ export function StripePaymentMethodsTable({
   onFilterDraftIdsChange,
   onFilterApply,
 }: {
-  rows: StripePaymentMethodRow[]
+  rows: PaymentMethodTableRow[]
   enabledById: Record<string, boolean>
   onEnabledChange: (id: string, next: boolean) => void
-  onViewAllCountries?: (row: StripePaymentMethodRow) => void
+  onViewAllCountries?: (row: PaymentMethodTableRow) => void
   openFilterId: PmcFilterType | null
   openFilterAnchor: FilterBarAnchor | null
   selections: PmcFilterSelections

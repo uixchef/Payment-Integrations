@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { IntegrationSettingsShell } from "@/components/integrations/settings/integration-settings-shell"
 import { ManualPaymentSettingsShell } from "@/components/integrations/settings/manual-payment/manual-payment-settings-shell"
+import { PayPalSettingsShell } from "@/components/integrations/settings/paypal/paypal-settings-shell"
 import { StripeSettingsShell } from "@/components/integrations/settings/stripe/stripe-settings-shell"
 import { INTEGRATIONS } from "@/lib/integrations-data"
 
@@ -10,6 +11,7 @@ const SUPPORTED_SETTINGS = new Set([
   "authorize-net",
   "manual",
   "stripe",
+  "paypal",
 ])
 
 type Params = Promise<{ providerId: string }>
@@ -56,6 +58,10 @@ export default async function IntegrationSettingsPage({
 
   if (providerId === "stripe") {
     return <StripeSettingsShell item={item} />
+  }
+
+  if (providerId === "paypal") {
+    return <PayPalSettingsShell item={item} />
   }
 
   return <IntegrationSettingsShell item={item} />

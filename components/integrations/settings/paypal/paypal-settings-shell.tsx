@@ -23,17 +23,13 @@ import { Separator } from "@/components/ui/separator"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { AddAccountButton } from "@/components/integrations/settings/add-account-button"
 import { SetAsDefaultButton } from "@/components/integrations/settings/set-as-default-button"
-import { AddStripeAccountDialog } from "@/components/integrations/settings/stripe/add-stripe-account-dialog"
+import { AddPayPalAccountDialog } from "@/components/integrations/settings/paypal/add-paypal-account-dialog"
 import {
-  StripeAccountConfig,
-  type StripeAccount,
-} from "@/components/integrations/settings/stripe/stripe-account-config"
-import { useStripeAccounts } from "@/components/integrations/settings/stripe/stripe-accounts-context"
-import { StripeEmptyState } from "@/components/integrations/settings/stripe/stripe-empty-state"
-import { StripeGuide } from "@/components/integrations/settings/stripe/stripe-guide"
-import { StripeSyncCard } from "@/components/integrations/settings/stripe/stripe-sync-card"
-import { StripeSyncImportingModal } from "@/components/integrations/settings/stripe/sync/stripe-sync-importing-modal"
-import { STRIPE_SYNC_COUNTS } from "@/components/integrations/settings/stripe/sync/sync-mock-data"
+  PayPalAccountConfig,
+  type PayPalAccount,
+} from "@/components/integrations/settings/paypal/paypal-account-config"
+import { usePayPalAccounts } from "@/components/integrations/settings/paypal/paypal-accounts-context"
+import { PayPalGuide } from "@/components/integrations/settings/paypal/paypal-guide"
 import { INTEGRATION_ASSETS } from "@/lib/integration-assets"
 import { getAddAccountButtonState } from "@/lib/integration-account-limits"
 import {
@@ -44,13 +40,12 @@ import type { IntegrationItem } from "@/lib/integrations-data"
 import { useIntegrationStatus } from "@/lib/integration-status-context"
 import { cn } from "@/lib/utils"
 
-/** Beyond this count the trailing tabs collapse into a "more" dropdown. */
 const MAX_VISIBLE_TABS = 3
 
 function splitVisibility(
-  accounts: StripeAccount[],
+  accounts: PayPalAccount[],
   activeId: string | null
-): { visible: StripeAccount[]; overflow: StripeAccount[] } {
+): { visible: PayPalAccount[]; overflow: PayPalAccount[] } {
   if (accounts.length <= MAX_VISIBLE_TABS) {
     return { visible: accounts, overflow: [] }
   }
@@ -63,8 +58,6 @@ function splitVisibility(
     return { visible, overflow }
   }
 
-  // Hoist the active account out of overflow into the last visible slot,
-  // demoting the displaced visible tab into overflow's leading position.
   const activeAccount = overflow[activeIdxInOverflow]
   const displaced = visible[visible.length - 1]
   const nextVisible = [...visible.slice(0, -1), activeAccount]
@@ -75,10 +68,9 @@ function splitVisibility(
   return { visible: nextVisible, overflow: nextOverflow }
 }
 
-export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
+export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
   const router = useRouter()
   const {
-    isConnected: isConnectedFromStatus,
     isDefault: isDefaultFromStatus,
     defaultProviderId,
     getDefaultProviderName,
@@ -86,7 +78,6 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
     setDefaultProvider,
   } = useIntegrationStatus()
 
-  const isConnected = isConnectedFromStatus(item.id)
   const isDefault = isDefaultFromStatus(item.id)
   const currentDefaultName = getDefaultProviderName()
   const otherDefaultProviderId =
@@ -99,33 +90,22 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
     defaultAccountId,
     setActiveAccountId,
     setDefaultAccountId,
-    ensureSeededOnConnect,
-    completeActiveAccountOAuth,
+    ensureInitialAccount,
     addPendingAccount,
     renameActiveAccount,
     updateActiveAccount,
+    connectActiveAccount,
     removeActiveAccount,
-    getAccountSyncState,
-    clearAccountSync,
-  } = useStripeAccounts()
+  } = usePayPalAccounts()
 
   const [showSwitchDefaultModal, setShowSwitchDefaultModal] = useState(false)
   const [showDisconnectModal, setShowDisconnectModal] = useState(false)
   const [accountDialogMode, setAccountDialogMode] = useState<
     "add" | "edit" | null
   >(null)
-  const [importingModalOpen, setImportingModalOpen] = useState(false)
 
-  const syncState = getAccountSyncState(activeAccountId)
-  const stripeLogo = item.logo ?? INTEGRATION_ASSETS.logos.stripe
-
-  const handleConnect = () => {
-    if (accounts.length === 0) {
-      ensureSeededOnConnect()
-      setConnected(item.id, true)
-      return
-    }
-    if (completeActiveAccountOAuth()) {
+  const handleSave = () => {
+    if (connectActiveAccount()) {
       setConnected(item.id, true)
     }
   }
@@ -139,9 +119,17 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
   }
 
   const handleDisconnect = () => {
-    const { remainingCount } = removeActiveAccount()
-    if (remainingCount === 0) {
+    const remaining = accounts.filter(
+      (account) => account.id !== activeAccountId
+    )
+    removeActiveAccount()
+
+    if (!remaining.some((account) => account.connected)) {
       setConnected(item.id, false)
+    }
+
+    if (remaining.length === 0) {
+      ensureInitialAccount()
     }
   }
 
@@ -149,7 +137,6 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
     if (!activeAccount?.connected) return
     if (isDefault && activeAccountId === defaultAccountId) return
 
-    // Need cross-provider confirmation only if we're changing the integration default.
     if (!isDefault && otherDefaultProviderId) {
       setShowSwitchDefaultModal(true)
       return
@@ -166,6 +153,14 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
     setDefaultAccountId(activeAccountId)
   }
 
+  const canSave =
+    Boolean(activeAccount?.clientId.trim()) &&
+    Boolean(activeAccount?.secretId.trim()) &&
+    !activeAccount?.connected
+
+  const isDefaultAccount =
+    isDefault && activeAccountId !== null && activeAccountId === defaultAccountId
+
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <SubHeader
@@ -173,14 +168,13 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
         accounts={accounts}
         activeAccountId={activeAccountId}
         defaultAccountId={defaultAccountId}
-        isConnected={isConnected}
         isDefault={isDefault}
         activeAccountConnected={Boolean(activeAccount?.connected)}
         onSelectAccount={setActiveAccountId}
         onAddAccount={() => setAccountDialogMode("add")}
         onSetAsDefault={handleSetAsDefault}
         onOpenPaymentMethods={() =>
-          router.push("/integrations/stripe/payment-methods")
+          router.push("/integrations/paypal/payment-methods")
         }
       />
 
@@ -189,71 +183,42 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
           <div className="flex min-h-0 flex-1 overflow-y-auto p-6">
             <div className="mx-auto flex w-full max-w-[1080px] gap-10">
               <div className="flex w-full max-w-[656px] min-w-0 flex-1 justify-start">
-                {activeAccount?.connected ? (
-                  <StripeAccountConfig
+                {activeAccount ? (
+                  <PayPalAccountConfig
                     account={activeAccount}
-                    isDefaultAccount={
-                      isDefault && activeAccount.id === defaultAccountId
-                    }
+                    isDefaultAccount={isDefaultAccount}
                     onModeChange={(mode) => updateActiveAccount({ mode })}
-                    onApplePayChange={(applePayEnabled) =>
-                      updateActiveAccount({ applePayEnabled })
+                    onClientIdChange={(clientId) =>
+                      updateActiveAccount({ clientId })
+                    }
+                    onSecretIdChange={(secretId) =>
+                      updateActiveAccount({ secretId })
                     }
                   />
-                ) : (
-                  <StripeEmptyState
-                    onWatchVideo={() => {
-                      window.open(
-                        "https://www.youtube.com/results?search_query=stripe+setup",
-                        "_blank",
-                        "noopener,noreferrer"
-                      )
-                    }}
-                    onConnect={handleConnect}
-                  />
-                )}
+                ) : null}
               </div>
 
-              <div className="flex flex-col gap-4">
-                <StripeSyncCard
-                  enabled={Boolean(activeAccount?.connected)}
-                  syncState={syncState}
-                  onViewDetails={() => {
-                    if (syncState?.status === "in-progress") {
-                      setImportingModalOpen(true)
-                      return
-                    }
-                    if (syncState?.status === "completed") {
-                      router.push("/integrations/stripe/sync?view=results")
-                    }
-                  }}
-                  onResync={() => {
-                    if (activeAccountId) clearAccountSync(activeAccountId)
-                    router.push("/integrations/stripe/sync")
-                  }}
-                  onSync={() => {
-                    /* mock: trigger a real Stripe sync here */
-                  }}
-                />
-                <StripeGuide isConnected={Boolean(activeAccount?.connected)} />
-              </div>
+              <PayPalGuide isConnected={Boolean(activeAccount?.connected)} />
             </div>
           </div>
 
           {activeAccount?.connected ? (
             <ConnectedFooter
-              providerName={item.name}
-              isDefaultAccount={
-                isDefault && activeAccount.id === defaultAccountId
-              }
+              isDefaultAccount={isDefaultAccount}
               onEditAccount={() => setAccountDialogMode("edit")}
               onDisconnect={() => setShowDisconnectModal(true)}
             />
-          ) : null}
+          ) : (
+            <PendingFooter
+              canSave={canSave}
+              onEditAccount={() => setAccountDialogMode("edit")}
+              onSave={handleSave}
+            />
+          )}
         </div>
       </div>
 
-      <AddStripeAccountDialog
+      <AddPayPalAccountDialog
         open={accountDialogMode !== null}
         mode={accountDialogMode ?? "add"}
         initialValue={
@@ -269,21 +234,6 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
             handleRenameActiveAccount(label)
           }
         }}
-      />
-
-      <StripeSyncImportingModal
-        open={importingModalOpen}
-        onOpenChange={setImportingModalOpen}
-        logo={stripeLogo}
-        summary={
-          syncState && syncState.status !== "incomplete"
-            ? syncState.summary
-            : {
-                subscriptions: STRIPE_SYNC_COUNTS.subscriptions,
-                contacts: STRIPE_SYNC_COUNTS.contacts,
-                paymentMethods: STRIPE_SYNC_COUNTS.notEligible,
-              }
-        }
       />
 
       <ConfirmationDialog
@@ -344,7 +294,6 @@ function SubHeader({
   accounts,
   activeAccountId,
   defaultAccountId,
-  isConnected,
   isDefault,
   activeAccountConnected,
   onSelectAccount,
@@ -353,10 +302,9 @@ function SubHeader({
   onOpenPaymentMethods,
 }: {
   item: IntegrationItem
-  accounts: StripeAccount[]
+  accounts: PayPalAccount[]
   activeAccountId: string | null
   defaultAccountId: string | null
-  isConnected: boolean
   isDefault: boolean
   activeAccountConnected: boolean
   onSelectAccount: (id: string) => void
@@ -368,7 +316,6 @@ function SubHeader({
     isDefault && activeAccountId !== null && activeAccountId === defaultAccountId
   const setAsDefaultState = getSetAsDefaultDisabledReason({
     multiAccount: true,
-    isConnected,
     isDefault,
     activeAccountConnected,
     activeIsDefaultAccount,
@@ -382,9 +329,10 @@ function SubHeader({
   const addAccountState = getAddAccountButtonState({
     accountsCount: accounts.length,
     hasConnectedAccount: accounts.some((account) => account.connected),
+    requireConnectedBeforeAdd: true,
   })
   const logo = item.logo ?? INTEGRATION_ASSETS.logos.placeholder
-  const showAccountTabs = isConnected && accounts.length > 0
+  const showAccountTabs = accounts.length > 0
   const { visible: visibleAccounts, overflow: overflowAccounts } =
     splitVisibility(accounts, activeAccountId)
 
@@ -464,28 +412,34 @@ function SubHeader({
             onAddAccount={onAddAccount}
           />
 
-          <div className="ml-auto" />
+          {activeAccountConnected ? (
+            <>
+              <div className="ml-auto" />
 
-          <div className="flex shrink-0 items-center gap-2">
-            <SetAsDefaultButton
-              disabled={setAsDefaultState.disabled}
-              tooltip={setAsDefaultTooltip}
-              onClick={onSetAsDefault}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onOpenPaymentMethods}
-              className={cn(
-                "h-9 gap-2 rounded px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 shadow-none",
-                "border-[#84adff] bg-white text-[#004eeb] shadow-[0_1px_2px_rgba(16,24,40,0.05)]",
-                "hover:border-[#84adff] hover:bg-[#f5f8ff] hover:text-[#004eeb]"
-              )}
-            >
-              <Settings2 className="size-4" strokeWidth={1.75} aria-hidden />
-              Payment methods
-            </Button>
-          </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <SetAsDefaultButton
+                  disabled={setAsDefaultState.disabled}
+                  tooltip={setAsDefaultTooltip}
+                  onClick={onSetAsDefault}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onOpenPaymentMethods}
+                  className={cn(
+                    "h-9 gap-2 rounded px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 shadow-none",
+                    "border-[#84adff] bg-white text-[#004eeb] shadow-[0_1px_2px_rgba(16,24,40,0.05)]",
+                    "hover:border-[#84adff] hover:bg-[#f5f8ff] hover:text-[#004eeb]"
+                  )}
+                >
+                  <Settings2 className="size-4" strokeWidth={1.75} aria-hidden />
+                  Payment methods
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1" />
+          )}
         </div>
       ) : (
         <div className="flex-1" />
@@ -494,11 +448,6 @@ function SubHeader({
   )
 }
 
-/**
- * The Default tag rendered inline with each account tab (and in the overflow
- * menu). The `Enabled` state is intentionally NOT shown here — it lives only
- * beside the body header, via ConnectionStatusTag in StripeAccountConfig.
- */
 function DefaultBadge({ active }: { active: boolean }) {
   return (
     <span
@@ -521,7 +470,7 @@ function MoreAccountsMenu({
   isDefault,
   onSelectAccount,
 }: {
-  accounts: StripeAccount[]
+  accounts: PayPalAccount[]
   defaultAccountId: string | null
   isDefault: boolean
   onSelectAccount: (id: string) => void
@@ -571,18 +520,58 @@ function VerticalDivider() {
   )
 }
 
+function PendingFooter({
+  canSave,
+  onEditAccount,
+  onSave,
+}: {
+  canSave: boolean
+  onEditAccount: () => void
+  onSave: () => void
+}) {
+  return (
+    <footer className="flex flex-col gap-3 pt-0">
+      <Separator className="bg-[#eaecf0]" />
+      <div className="flex items-center justify-between px-6 pb-3">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onEditAccount}
+          className={cn(
+            "h-9 gap-2 rounded px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 shadow-none",
+            "border-[#d0d5dd] bg-white text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.05)]",
+            "hover:bg-[#f9fafb]"
+          )}
+        >
+          <Pencil className="size-4" strokeWidth={1.75} aria-hidden />
+          Edit account
+        </Button>
+        <Button
+          type="button"
+          disabled={!canSave}
+          onClick={onSave}
+          className={cn(
+            "h-9 rounded px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-white",
+            "bg-[#155eef] hover:bg-[#004eeb]",
+            "disabled:bg-[#b2ccff] disabled:text-white disabled:opacity-100"
+          )}
+        >
+          Save
+        </Button>
+      </div>
+    </footer>
+  )
+}
+
 function ConnectedFooter({
   isDefaultAccount,
   onEditAccount,
   onDisconnect,
 }: {
-  providerName: string
   isDefaultAccount: boolean
   onEditAccount: () => void
   onDisconnect: () => void
 }) {
-  // Avoid the native `disabled` attribute so the Tooltip can still fire on
-  // hover/focus; aria-disabled + onClick guard handle the semantics instead.
   const disconnectButton = (
     <Button
       type="button"

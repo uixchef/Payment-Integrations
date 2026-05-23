@@ -1,5 +1,6 @@
 import { PaymentHubShell } from "@/components/payment-hub/payment-hub-shell";
 import { IntegrationCountriesProvider } from "@/components/integrations/integration-countries-context";
+import { PayPalAccountsProvider } from "@/components/integrations/settings/paypal/paypal-accounts-context";
 import { StripeAccountsProvider } from "@/components/integrations/settings/stripe/stripe-accounts-context";
 import { IntegrationStatusProvider } from "@/lib/integration-status-context";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,9 +18,11 @@ export default function HubLayout({
     <TooltipProvider>
       <IntegrationStatusProvider>
         <StripeAccountsProvider>
-          <IntegrationCountriesProvider>
-            <PaymentHubShell>{children}</PaymentHubShell>
-          </IntegrationCountriesProvider>
+          <PayPalAccountsProvider>
+            <IntegrationCountriesProvider>
+              <PaymentHubShell>{children}</PaymentHubShell>
+            </IntegrationCountriesProvider>
+          </PayPalAccountsProvider>
         </StripeAccountsProvider>
       </IntegrationStatusProvider>
     </TooltipProvider>

@@ -12,6 +12,7 @@ import {
   type AuthorizeNetFormState,
 } from "@/components/integrations/settings/authorize-net-settings-form"
 import { QuickStartGuide } from "@/components/integrations/settings/quick-start-guide"
+import { SetAsDefaultButton } from "@/components/integrations/settings/set-as-default-button"
 import {
   RazorpaySettingsForm,
   type RazorpayFormState,
@@ -19,6 +20,10 @@ import {
 import { INTEGRATION_ASSETS } from "@/lib/integration-assets"
 import type { IntegrationItem } from "@/lib/integrations-data"
 import { useIntegrationStatus } from "@/lib/integration-status-context"
+import {
+  getSetAsDefaultDisabledReason,
+  getSetAsDefaultTooltip,
+} from "@/lib/set-as-default-tooltip"
 import { cn } from "@/lib/utils"
 
 const PROVIDER_DOCS: Record<string, string> = {
@@ -40,6 +45,15 @@ function SubHeader({
   onSetAsDefault: () => void
 }) {
   const logo = item.logo ?? INTEGRATION_ASSETS.logos.placeholder
+  const setAsDefaultState = getSetAsDefaultDisabledReason({
+    isConnected,
+    isDefault,
+  })
+  const setAsDefaultTooltip = getSetAsDefaultTooltip({
+    providerName: item.name,
+    disabled: setAsDefaultState.disabled,
+    reason: setAsDefaultState.reason,
+  })
 
   return (
     <header className="flex h-[62px] shrink-0 items-center gap-3 border-b border-[#d0d5dd] bg-white px-4">
@@ -67,23 +81,11 @@ function SubHeader({
         </h1>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <Button
-          type="button"
-          variant="neutral"
-          disabled={!isConnected || isDefault}
-          aria-disabled={!isConnected || isDefault}
+        <SetAsDefaultButton
+          disabled={setAsDefaultState.disabled}
+          tooltip={setAsDefaultTooltip}
           onClick={onSetAsDefault}
-          title={
-            !isConnected
-              ? `Connect ${item.name} to set it as the default provider.`
-              : isDefault
-                ? `${item.name} is already the default provider.`
-                : undefined
-          }
-          className="px-2.5"
-        >
-          Set as default
-        </Button>
+        />
       </div>
     </header>
   )

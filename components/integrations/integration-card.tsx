@@ -14,6 +14,7 @@ const PROVIDERS_WITH_SETTINGS = new Set([
   "authorize-net",
   "manual",
   "stripe",
+  "paypal",
 ])
 
 export function IntegrationCard({ item }: { item: IntegrationItem }) {
