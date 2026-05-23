@@ -20,17 +20,17 @@ const RAZORPAY_STEPS: GuideStep[] = [
   },
   {
     number: 2,
-    content: <>Select the Authentication section.</>,
+    content: <>Select the authentication section.</>,
   },
   {
     number: 3,
     content: (
       <>
-        Add the <strong className="font-medium text-[#475467]">Test</strong> or/and{" "}
-        <strong className="font-medium text-[#475467]">Live</strong> credentials generated
+        Add the <strong className="font-medium text-[#475467]">test</strong> or/and{" "}
+        <strong className="font-medium text-[#475467]">live</strong> credentials generated
         from{" "}
         <strong className="font-medium text-[#475467]">
-          Razorpay dashboard &gt; Account &amp; Settings &gt; API keys &gt; Generate key.
+          Razorpay dashboard &gt; Account &amp; settings &gt; API keys &gt; Generate key.
         </strong>
       </>
     ),
@@ -39,7 +39,7 @@ const RAZORPAY_STEPS: GuideStep[] = [
     number: 4,
     content: (
       <>
-        Select <strong className="font-medium text-[#475467]">Fixed schedule subscription</strong> or{" "}
+        Select <strong className="font-medium text-[#475467]">Fixed schedule</strong> or{" "}
         <strong className="font-medium text-[#475467]">Charge when needed</strong>, based on what
         is active in your Razorpay account.
       </>
@@ -116,9 +116,50 @@ const AUTHORIZE_NET_STEPS: GuideStep[] = [
   },
 ]
 
+const MERCADO_PAGO_STEPS: GuideStep[] = [
+  {
+    number: 1,
+    content: (
+      <>
+        Get your Mercado Pago API credentials from{" "}
+        <strong className="font-medium text-[#475467]">
+          developer dashboard &gt; your integrations &gt; application &gt; credentials.
+        </strong>
+      </>
+    ),
+  },
+  {
+    number: 2,
+    content: (
+      <>
+        Enter your{" "}
+        <strong className="font-medium text-[#475467]">public key</strong> and{" "}
+        <strong className="font-medium text-[#475467]">access token</strong>.
+      </>
+    ),
+  },
+  {
+    number: 3,
+    content: <>Select your account country.</>,
+  },
+  {
+    number: 4,
+    content: <>Save and verify the connection.</>,
+  },
+  {
+    number: 5,
+    content: (
+      <>
+        (Optional) Use test mode to validate the setup before going live.
+      </>
+    ),
+  },
+]
+
 const PROVIDER_STEPS: Record<string, GuideStep[]> = {
   razorpay: RAZORPAY_STEPS,
   "authorize-net": AUTHORIZE_NET_STEPS,
+  "mercado-pago": MERCADO_PAGO_STEPS,
 }
 
 function StepRow({ number, content }: GuideStep) {

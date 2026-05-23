@@ -19,7 +19,6 @@ export type AuthorizeNetFormState = {
 export type AuthorizeNetFormProps = {
   isConnected: boolean
   isDefault?: boolean
-  isReconnecting?: boolean
   state: AuthorizeNetFormState
   onStateChange: (next: AuthorizeNetFormState) => void
 }
@@ -27,12 +26,11 @@ export type AuthorizeNetFormProps = {
 export function AuthorizeNetSettingsForm({
   isConnected,
   isDefault = false,
-  isReconnecting = false,
   state,
   onStateChange,
 }: AuthorizeNetFormProps) {
   const { mode, loginId, transactionKey, signatureKey } = state
-  const readOnly = isConnected && !isReconnecting
+  const readOnly = isConnected
 
   const update = (patch: Partial<AuthorizeNetFormState>) => {
     onStateChange({ ...state, ...patch })

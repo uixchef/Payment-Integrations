@@ -49,6 +49,20 @@ export const INTEGRATIONS: IntegrationItem[] = [
     logo: INTEGRATION_ASSETS.logos.nmi,
   },
   {
+    id: "mercado-pago",
+    name: "Mercado Pago",
+    methods: "Cards · Wallets · Bank transfers",
+    availability: {
+      kind: "flags",
+      flags: ["MX", "BR", "AR", "CL", "CO", "UY"],
+      extraCount: 2,
+      regionLabel: "Latin America",
+      tooltipFlags: ["MX", "BR", "AR", "CL", "CO", "UY", "PE", "US"],
+    },
+    verified: true,
+    logo: INTEGRATION_ASSETS.logos.mercadoPago,
+  },
+  {
     id: "gocardless",
     name: "GoCardless",
     methods: "Bank transfers (direct debit)",
@@ -211,4 +225,16 @@ export function parseStatusTab(
   value: string | null | undefined
 ): IntegrationStatusTab {
   return value === "connected" ? "connected" : "all"
+}
+
+/** Resolves the active status tab from URL params and connection state. */
+export function resolveIntegrationStatusTab(
+  statusParam: string | null | undefined,
+  hasAnyConnected: boolean
+): IntegrationStatusTab {
+  if (statusParam === "all") return "all"
+  if (statusParam === "connected") {
+    return hasAnyConnected ? "connected" : "all"
+  }
+  return hasAnyConnected ? "connected" : "all"
 }

@@ -9,6 +9,7 @@ export const INTEGRATION_ASSETS = {
     square: "/integrations/source/square.png",
     authorizeNet: "/integrations/source/authorize-net.png",
     razorpay: "/integrations/logos/razorpay.png",
+    mercadoPago: "/integrations/source/mercado-pago.png",
     manual: "/integrations/no-providers-connected/money.svg",
     clover: "/integrations/source/clover.png",
     paymob: "/integrations/source/paymob.png",
@@ -28,6 +29,7 @@ export const INTEGRATION_ASSETS = {
   },
   table: {
     creditCard: "/integrations/table/credit-card.svg",
+    slabSerif: "/integrations/table/slab-serif.png",
     public: "/integrations/table/public.svg",
     filterLines: "/integrations/table/filter-lines.svg",
     highlightMouseCursor: "/integrations/table/highlight-mouse-cursor.svg",

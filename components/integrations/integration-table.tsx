@@ -21,6 +21,7 @@ import Link from "next/link"
 const PROVIDERS_WITH_SETTINGS = new Set([
   "razorpay",
   "authorize-net",
+  "mercado-pago",
   "manual",
   "stripe",
   "paypal",
@@ -156,8 +157,12 @@ function TableRow({ item }: { item: IntegrationItem }) {
         "group [--card-surface-color:white] transition-colors hover:bg-[#f5f8ff] hover:[--card-surface-color:#f5f8ff]"
       )}
     >
-      <div className="flex h-16 items-center border-b border-r border-[#d0d5dd] px-3 py-2">
-        <IntegrationProviderIdentity item={item} isDefault={defaultProvider} />
+      <div className="flex h-16 w-full items-center border-b border-r border-[#d0d5dd] px-3 py-2">
+        <IntegrationProviderIdentity
+          item={item}
+          isDefault={defaultProvider}
+          alignBadgesEnd
+        />
       </div>
 
       <div className="flex h-16 items-center border-b border-r border-[#d0d5dd] px-3 py-2">

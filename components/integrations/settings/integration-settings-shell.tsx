@@ -12,6 +12,10 @@ import {
   AuthorizeNetSettingsForm,
   type AuthorizeNetFormState,
 } from "@/components/integrations/settings/authorize-net-settings-form"
+import {
+  MercadoPagoSettingsForm,
+  type MercadoPagoFormState,
+} from "@/components/integrations/settings/mercado-pago-settings-form"
 import { QuickStartGuide } from "@/components/integrations/settings/quick-start-guide"
 import { SetAsDefaultButton } from "@/components/integrations/settings/set-as-default-button"
 import {
@@ -25,6 +29,10 @@ import {
   getSetAsDefaultDisabledReason,
   getSetAsDefaultTooltip,
 } from "@/lib/set-as-default-tooltip"
+import {
+  INITIAL_MERCADO_PAGO,
+  SEEDED_MERCADO_PAGO,
+} from "@/lib/mercado-pago-config-data"
 import { cn } from "@/lib/utils"
 
 const PROVIDER_DOCS: Record<string, string> = {
@@ -32,6 +40,8 @@ const PROVIDER_DOCS: Record<string, string> = {
     "https://help.gohighlevel.com/support/solutions/articles/48000980323-razorpay-integration",
   "authorize-net":
     "https://help.gohighlevel.com/support/solutions/articles/48000980324-authorize-net-integration",
+  "mercado-pago":
+    "https://www.mercadopago.com/developers/en/docs/your-integrations/credentials",
 }
 
 function SubHeader({
@@ -179,8 +189,8 @@ export function IntegrationSettingsShell({ item }: { item: IntegrationItem }) {
   const otherDefaultProviderId =
     defaultProviderId && defaultProviderId !== item.id ? defaultProviderId : null
 
-  const [isReconnecting, setIsReconnecting] = useState(false)
   const [showSwitchDefaultModal, setShowSwitchDefaultModal] = useState(false)
+  const [showDisconnectModal, setShowDisconnectModal] = useState(false)
   const [razorpayForm, setRazorpayForm] = useState<RazorpayFormState>(() =>
     item.id === "razorpay" && isConnectedFromStatus("razorpay")
       ? SEEDED_RAZORPAY
@@ -192,6 +202,11 @@ export function IntegrationSettingsShell({ item }: { item: IntegrationItem }) {
         ? SEEDED_AUTHORIZE_NET
         : INITIAL_AUTHORIZE_NET
   )
+  const [mercadoPagoForm, setMercadoPagoForm] = useState<MercadoPagoFormState>(() =>
+    item.id === "mercado-pago" && isConnectedFromStatus("mercado-pago")
+      ? SEEDED_MERCADO_PAGO
+      : INITIAL_MERCADO_PAGO
+  )
 
   const canSaveRazorpay =
     razorpayForm.keyId.trim().length > 0 &&
@@ -202,23 +217,31 @@ export function IntegrationSettingsShell({ item }: { item: IntegrationItem }) {
     authorizeNetForm.transactionKey.trim().length > 0 &&
     authorizeNetForm.signatureKey.trim().length > 0
 
+  const canSaveMercadoPago =
+    mercadoPagoForm.publicKey.trim().length > 0 &&
+    mercadoPagoForm.accessToken.trim().length > 0 &&
+    mercadoPagoForm.country.trim().length > 0
+
   const handleConnect = () => {
     if (item.id === "razorpay" && canSaveRazorpay) {
       setConnected(item.id, true)
     }
     if (item.id === "authorize-net" && canSaveAuthorizeNet) {
       setConnected(item.id, true)
-      setIsReconnecting(false)
+    }
+    if (item.id === "mercado-pago" && canSaveMercadoPago) {
+      setConnected(item.id, true)
     }
   }
 
-  const handleReconnect = () => {
-    setIsReconnecting(true)
-  }
-
-  const handleSaveReconnect = () => {
-    if (!canSaveAuthorizeNet) return
-    setIsReconnecting(false)
+  const handleDisconnect = () => {
+    setConnected(item.id, false)
+    if (item.id === "authorize-net") {
+      setAuthorizeNetForm(INITIAL_AUTHORIZE_NET)
+    }
+    if (item.id === "mercado-pago") {
+      setMercadoPagoForm(INITIAL_MERCADO_PAGO)
+    }
   }
 
   const handleSetAsDefault = () => {
@@ -258,20 +281,27 @@ export function IntegrationSettingsShell({ item }: { item: IntegrationItem }) {
         }
       }
 
-      if (isReconnecting) {
+      return {
+        kind: "destructive",
+        label: "Disconnect",
+        onClick: () => setShowDisconnectModal(true),
+      }
+    }
+
+    if (item.id === "mercado-pago") {
+      if (!isConnected) {
         return {
           kind: "primary",
           label: "Save",
-          disabled: !canSaveAuthorizeNet,
-          onClick: handleSaveReconnect,
+          disabled: !canSaveMercadoPago,
+          onClick: handleConnect,
         }
       }
 
       return {
-        kind: "primary",
-        label: "Reconnect",
-        disabled: false,
-        onClick: handleReconnect,
+        kind: "destructive",
+        label: "Disconnect",
+        onClick: () => setShowDisconnectModal(true),
       }
     }
 
@@ -318,9 +348,16 @@ export function IntegrationSettingsShell({ item }: { item: IntegrationItem }) {
                   <AuthorizeNetSettingsForm
                     isConnected={isConnected}
                     isDefault={isDefault}
-                    isReconnecting={isReconnecting}
                     state={authorizeNetForm}
                     onStateChange={setAuthorizeNetForm}
+                  />
+                ) : null}
+                {item.id === "mercado-pago" ? (
+                  <MercadoPagoSettingsForm
+                    isConnected={isConnected}
+                    isDefault={isDefault}
+                    state={mercadoPagoForm}
+                    onStateChange={setMercadoPagoForm}
                   />
                 ) : null}
               </div>
@@ -361,6 +398,17 @@ export function IntegrationSettingsShell({ item }: { item: IntegrationItem }) {
         cancelLabel="Cancel"
         variant="warning"
         onConfirm={handleConfirmSwitchDefault}
+      />
+
+      <ConfirmationDialog
+        open={showDisconnectModal}
+        onOpenChange={setShowDisconnectModal}
+        title={`Disconnect ${item.name}?`}
+        description="This removes the connection and stops routing new transactions through this provider."
+        confirmLabel="Disconnect"
+        cancelLabel="Cancel"
+        variant="destructive"
+        onConfirm={handleDisconnect}
       />
     </div>
   )

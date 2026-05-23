@@ -7,13 +7,20 @@ import {
   Bell,
 } from "lucide-react"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 import {
-  parseStatusTab,
+  resolveIntegrationStatusTab,
   type IntegrationStatusTab,
 } from "@/lib/integrations-data"
 import { useIntegrationStatus } from "@/lib/integration-status-context"
 import { INTEGRATIONS } from "@/lib/integrations-data"
+import {
+  PAYMENTS_HUB_DEFAULTS,
+  getIntegrationsHubPath,
+  resolvePaymentsHubNavUrls,
+  type PaymentsHubNavUrls,
+} from "@/lib/payment-hub-nav"
 import { cn } from "@/lib/utils"
 
 function Settings04Icon({ className }: { className?: string }) {
@@ -35,17 +42,31 @@ function Settings04Icon({ className }: { className?: string }) {
 }
 
 const primaryTabs = [
-  { id: "overview", label: "Overview" },
+  { id: "overview", label: "Overview", target: "overview" as const },
   { id: "invoices", label: "Invoices & estimates" },
   { id: "docs", label: "Docs & contracts" },
-  { id: "subscriptions", label: "Subscriptions" },
+  { id: "subscriptions", label: "Subscriptions", target: "subscriptions" as const },
   { id: "products", label: "Products" },
-  { id: "integrations", label: "Integrations" },
+  {
+    id: "integrations",
+    label: "Integrations",
+    target: "integrations" as const,
+    internalHref: getIntegrationsHubPath(),
+  },
 ] as const
 
-function getActiveTabId(
-  pathname: string
-): (typeof primaryTabs)[number]["id"] {
+type PrimaryTab = (typeof primaryTabs)[number]
+
+function primaryTabClassName(isActive: boolean) {
+  return cn(
+    "inline-flex h-10 shrink-0 items-center border-b-2 px-2 text-base leading-6 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155eef]/40",
+    isActive
+      ? "border-[#004eeb] font-semibold text-[#004eeb]"
+      : "border-transparent font-medium text-[#667085] hover:text-[#101828]"
+  )
+}
+
+function getActiveTabId(pathname: string): PrimaryTab["id"] {
   if (pathname === "/integrations" || pathname.startsWith("/integrations/")) {
     return "integrations"
   }
@@ -62,6 +83,11 @@ function isIntegrationSettingsRoute(pathname: string): boolean {
   )
 }
 
+/** LeadConnector app manage screens use a focused layout without Payments tabs. */
+function shouldHidePaymentsPrimaryNav(pathname: string): boolean {
+  return pathname === "/integrations/razorpay/manage"
+}
+
 const STATUS_TABS: { id: IntegrationStatusTab; label: string }[] = [
   { id: "connected", label: "Connected" },
   { id: "all", label: "All providers" },
@@ -70,14 +96,27 @@ const STATUS_TABS: { id: IntegrationStatusTab; label: string }[] = [
 export function Topbar() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const [navUrls, setNavUrls] = useState<PaymentsHubNavUrls>({
+    overview: PAYMENTS_HUB_DEFAULTS.overview,
+    subscriptions: PAYMENTS_HUB_DEFAULTS.subscriptions,
+    integrations: PAYMENTS_HUB_DEFAULTS.integrations || getIntegrationsHubPath(),
+  })
   const activeTabId = getActiveTabId(pathname)
   const showIntegrationsSubHeader = !isIntegrationSettingsRoute(pathname)
-  const activeStatusTab = parseStatusTab(searchParams.get("status"))
+  const hidePaymentsPrimaryNav = shouldHidePaymentsPrimaryNav(pathname)
   const { isConnected } = useIntegrationStatus()
   const connectedCount = INTEGRATIONS.reduce(
     (count, item) => (isConnected(item.id) ? count + 1 : count),
     0
   )
+  const activeStatusTab = resolveIntegrationStatusTab(
+    searchParams.get("status"),
+    connectedCount > 0
+  )
+
+  useEffect(() => {
+    setNavUrls(resolvePaymentsHubNavUrls("integrations"))
+  }, [pathname])
 
   return (
     <header className="w-full min-w-0 bg-white">
@@ -85,33 +124,61 @@ export function Topbar() {
         {/* Row 1 — Primary header */}
         <div className="relative border-b border-[#d0d5dd] bg-white">
           <div className="flex w-full flex-col gap-3 px-4 py-2 md:h-10 md:flex-row md:items-stretch md:justify-between md:gap-12 md:py-0">
-            <div className="flex min-w-0 flex-1 flex-col gap-2 md:flex-row md:items-center md:gap-3">
-              <h1 className="shrink-0 text-xl font-semibold leading-[30px] tracking-normal text-[#101828]">
-                Payments
-              </h1>
-              <nav
-                className="flex min-h-0 min-w-0 flex-1 items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                aria-label="Payments sections"
-              >
-                {primaryTabs.map((tab) => {
-                  const isActive = tab.id === activeTabId
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      className={cn(
-                        "inline-flex h-10 shrink-0 items-center border-b-2 px-2 text-base leading-6 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155eef]/40",
-                        isActive
-                          ? "border-[#004eeb] font-semibold text-[#004eeb]"
-                          : "border-transparent font-medium text-[#667085] hover:text-[#101828]"
-                      )}
-                    >
+            {hidePaymentsPrimaryNav ? (
+              <div className="min-w-0 flex-1" aria-hidden />
+            ) : (
+              <div className="flex min-w-0 flex-1 flex-col gap-2 md:flex-row md:items-center md:gap-3">
+                <h1 className="shrink-0 text-xl font-semibold leading-[30px] tracking-normal text-[#101828]">
+                  Payments
+                </h1>
+                <nav
+                  className="flex min-h-0 min-w-0 flex-1 items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  aria-label="Payments sections"
+                >
+                  {primaryTabs.map((tab) => {
+                    const isActive = tab.id === activeTabId
+                    const label = (
                       <span className="whitespace-nowrap">{tab.label}</span>
-                    </button>
-                  )
-                })}
-              </nav>
-            </div>
+                    )
+
+                    if ("internalHref" in tab && tab.internalHref) {
+                      return (
+                        <Link
+                          key={tab.id}
+                          href={tab.internalHref}
+                          aria-current={isActive ? "page" : undefined}
+                          className={primaryTabClassName(isActive)}
+                        >
+                          {label}
+                        </Link>
+                      )
+                    }
+
+                    if ("target" in tab && tab.target) {
+                      return (
+                        <a
+                          key={tab.id}
+                          href={navUrls[tab.target]}
+                          className={primaryTabClassName(isActive)}
+                        >
+                          {label}
+                        </a>
+                      )
+                    }
+
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        className={primaryTabClassName(isActive)}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </nav>
+              </div>
+            )}
 
             <div
               className="flex h-full shrink-0 items-center gap-3"
@@ -178,7 +245,7 @@ export function Topbar() {
                   const href =
                     tab.id === "connected"
                       ? "/integrations?status=connected"
-                      : "/integrations"
+                      : "/integrations?status=all"
 
                   return (
                     <Link
@@ -222,13 +289,13 @@ export function Topbar() {
                   className="h-full w-px shrink-0 bg-[#eaecf0]"
                 />
               ) : null}
-              <button
-                type="button"
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded border border-[#155eef] bg-[#155eef] px-2.5 py-1.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-white shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors hover:bg-[#004eeb] hover:border-[#004eeb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155eef]/40"
+              <Link
+                href="/integrations/configure"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded border border-[#155eef] bg-[#155eef] px-2.5 py-1.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-white shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors hover:border-[#004eeb] hover:bg-[#004eeb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155eef]/40"
               >
                 <Settings04Icon className="text-white" />
                 Configure providers
-              </button>
+              </Link>
             </div>
           </div>
         ) : null}

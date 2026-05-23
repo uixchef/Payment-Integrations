@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils"
 const PROVIDERS_WITH_SETTINGS = new Set([
   "razorpay",
   "authorize-net",
+  "mercado-pago",
   "manual",
   "stripe",
   "paypal",

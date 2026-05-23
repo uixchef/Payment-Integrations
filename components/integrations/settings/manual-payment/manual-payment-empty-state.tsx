@@ -80,7 +80,7 @@ export function ManualPaymentEmptyState({
         type="button"
         onClick={onEnable}
         className={cn(
-          "h-9 gap-2 rounded-lg px-3.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6",
+          "h-10 gap-2 rounded-[8px] px-3.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6",
           "bg-[#155eef] text-white hover:bg-[#004eeb]"
         )}
       >

@@ -135,6 +135,21 @@ const AUTHORIZE_NET_COUNTRIES: IntegrationCountry[] = [
 ]
 
 /**
+ * Mercado Pago supported merchant countries (8 total).
+ * Source: Mercado Pago developer docs — Latin America + United States.
+ */
+const MERCADO_PAGO_COUNTRIES: IntegrationCountry[] = [
+  { continent: "North America", code: "US" },
+  { continent: "North America", code: "MX" },
+  { continent: "South America", code: "AR" },
+  { continent: "South America", code: "BR" },
+  { continent: "South America", code: "CL" },
+  { continent: "South America", code: "CO" },
+  { continent: "South America", code: "PE" },
+  { continent: "South America", code: "UY" },
+]
+
+/**
  * Clover supported merchant countries (13 total).
  * Source: docs.clover.com — multi-market launch regions.
  */
@@ -159,6 +174,7 @@ export const INTEGRATION_COUNTRIES: Record<string, IntegrationCountry[]> = {
   gocardless: GOCARDLESS_COUNTRIES,
   square: SQUARE_COUNTRIES,
   "authorize-net": AUTHORIZE_NET_COUNTRIES,
+  "mercado-pago": MERCADO_PAGO_COUNTRIES,
   clover: CLOVER_COUNTRIES,
 }
 

@@ -82,8 +82,8 @@ export function RazorpayManageShell({ item }: { item: IntegrationItem }) {
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[12px] bg-white shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)]">
         <div className="shrink-0 border-b border-[#eaecf0] px-6 pb-0 pt-5">
           <Link
-            href="/integrations"
-            aria-label="Back to integrations"
+            href={`/integrations/${item.id}`}
+            aria-label={`Back to ${item.name} integration settings`}
             className="inline-flex items-center gap-1.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-[#004eeb] outline-none transition-colors hover:text-[#155eef] focus-visible:ring-2 focus-visible:ring-[#84adff]"
           >
             <ArrowLeft className="size-4" strokeWidth={1.75} aria-hidden />
@@ -112,7 +112,7 @@ export function RazorpayManageShell({ item }: { item: IntegrationItem }) {
                   type="button"
                   className="inline-flex h-8 items-center gap-1 rounded border border-[#d0d5dd] bg-white px-2 font-[family-name:var(--font-inter)] text-sm font-medium leading-5 text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.05)] outline-none hover:bg-[#f9fafb] focus-visible:ring-2 focus-visible:ring-[#84adff]"
                 >
-                  Agency View
+                  Agency view
                   <ChevronDown className="size-4" strokeWidth={1.75} aria-hidden />
                 </button>
               </div>
@@ -133,7 +133,7 @@ export function RazorpayManageShell({ item }: { item: IntegrationItem }) {
                   Free
                 </span>
                 <span className="inline-flex h-6 items-center rounded-xl bg-[#ecfdf3] px-2 font-[family-name:var(--font-inter)] text-sm font-medium leading-5 text-[#027a48]">
-                  White-Label Verified
+                  White-label verified
                 </span>
               </div>
             </div>
@@ -166,7 +166,7 @@ export function RazorpayManageShell({ item }: { item: IntegrationItem }) {
               <p className="mt-2 font-[family-name:var(--font-inter)] text-base leading-6 text-[#475467]">
                 Accept cards, wallets, bank transfers, and buy now, pay later
                 options through Razorpay for customers in India. Open the
-                Authentication tab to update credentials and billing settings.
+                authentication tab to update credentials and billing settings.
               </p>
             </div>
           ) : (

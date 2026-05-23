@@ -3,6 +3,7 @@ import { IntegrationCountriesProvider } from "@/components/integrations/integrat
 import { PayPalAccountsProvider } from "@/components/integrations/settings/paypal/paypal-accounts-context";
 import { StripeAccountsProvider } from "@/components/integrations/settings/stripe/stripe-accounts-context";
 import { IntegrationStatusProvider } from "@/lib/integration-status-context";
+import { ProviderConfigurationProvider } from "@/lib/provider-configuration-context";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Hub shell reads `useSearchParams()` (Topbar tabs, integrations canvas tab),
@@ -19,9 +20,11 @@ export default function HubLayout({
       <IntegrationStatusProvider>
         <StripeAccountsProvider>
           <PayPalAccountsProvider>
-            <IntegrationCountriesProvider>
-              <PaymentHubShell>{children}</PaymentHubShell>
-            </IntegrationCountriesProvider>
+            <ProviderConfigurationProvider>
+              <IntegrationCountriesProvider>
+                <PaymentHubShell>{children}</PaymentHubShell>
+              </IntegrationCountriesProvider>
+            </ProviderConfigurationProvider>
           </PayPalAccountsProvider>
         </StripeAccountsProvider>
       </IntegrationStatusProvider>

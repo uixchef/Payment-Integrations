@@ -9,6 +9,7 @@ import { INTEGRATIONS } from "@/lib/integrations-data"
 const SUPPORTED_SETTINGS = new Set([
   "razorpay",
   "authorize-net",
+  "mercado-pago",
   "manual",
   "stripe",
   "paypal",

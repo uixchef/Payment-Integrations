@@ -73,11 +73,11 @@ export function RazorpayAuthTab({
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="font-[family-name:var(--font-inter)] text-xl font-semibold leading-[30px] text-[#101828]">
-          Razorpay Configuration
+          Razorpay configuration
         </h2>
         <p className="mt-2 max-w-[720px] font-[family-name:var(--font-inter)] text-base leading-6 text-[#475467]">
-          Update test and live credentials here. Please update the webhook url in
-          razorpay account to{" "}
+          Update test and live credentials here. Please update the webhook URL in your
+          Razorpay account to{" "}
           <code className="rounded bg-[#f2f4f7] px-1 py-0.5 font-mono text-sm text-[#344054]">
             {RAZORPAY_WEBHOOK_URL}
           </code>
@@ -87,7 +87,7 @@ export function RazorpayAuthTab({
       <div className="grid grid-cols-[280px_minmax(0,1fr)] gap-x-8 gap-y-6">
         <div className="pt-1">
           <p className="font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-[#101828]">
-            Test Credentials
+            Test credentials
           </p>
           <p className="mt-1 font-[family-name:var(--font-inter)] text-sm leading-5 text-[#475467]">
             Update test credentials here.
@@ -97,27 +97,25 @@ export function RazorpayAuthTab({
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <FieldLabel htmlFor="razorpay-manage-key-id" required>
-              Razorpay Key ID
+              Razorpay key id
             </FieldLabel>
             <CredentialInput
               id="razorpay-manage-key-id"
               value={keyId}
               onChange={(next) => update({ keyId: next })}
-              placeholder="Enter Razorpay key id"
+              placeholder="Enter your Razorpay public key id"
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <FieldLabel htmlFor="razorpay-manage-secret" required>
-              Razorpay secret key
-            </FieldLabel>
+            <FieldLabel htmlFor="razorpay-manage-secret">Secret key</FieldLabel>
             <div className="relative">
               <CredentialInput
                 id="razorpay-manage-secret"
                 type={showSecret ? "text" : "password"}
                 value={secret}
                 onChange={(next) => update({ secret: next })}
-                placeholder="Enter Razorpay secret key"
+                placeholder="Test secret id"
               />
               <button
                 type="button"
