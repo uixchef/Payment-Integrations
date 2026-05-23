@@ -177,6 +177,9 @@ nextjs-portal:has([role="dialog"]) > * {
   body {
     @apply h-full overflow-hidden;
   }
+  html {
+    scrollbar-gutter: stable;
+  }
   body {
     @apply bg-background text-foreground;
   }

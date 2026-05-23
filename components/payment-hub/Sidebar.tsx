@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
+import { usePaymentsHubSidebarCollapsed } from "@/lib/payment-hub-sidebar"
 import { cn } from "@/lib/utils"
 
 const ICON = "/icons/sidebar"
@@ -82,13 +82,7 @@ function NavRow({
 }
 
 export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false)
-
-  useEffect(() => {
-    if (window.matchMedia("(max-width: 1023px)").matches) {
-      setCollapsed(true)
-    }
-  }, [])
+  const { collapsed, toggleCollapsed } = usePaymentsHubSidebarCollapsed()
 
   return (
     <aside
@@ -318,7 +312,7 @@ export function Sidebar() {
 
       <button
         type="button"
-        onClick={() => setCollapsed((c) => !c)}
+        onClick={toggleCollapsed}
         aria-expanded={!collapsed}
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         className="absolute bottom-6 -right-3 border-0 bg-transparent p-0 shadow-none hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155eef]"
