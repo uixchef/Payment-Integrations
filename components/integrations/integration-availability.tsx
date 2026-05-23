@@ -96,6 +96,8 @@ function FlagStack({
         {extraCount != null ? (
           <ExtraCountBadge
             count={extraCount}
+            integrationId={integrationId}
+            visibleFlags={flags}
             tooltipFlags={tooltipFlags}
             index={flags.length}
             onViewAll={() => openCountriesPanel(integrationId)}

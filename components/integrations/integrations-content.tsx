@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { IntegrationGrid } from "@/components/integrations/integration-grid"
+import { IntegrationsEmptyState } from "@/components/integrations/integrations-empty-state"
 import { IntegrationTable } from "@/components/integrations/integration-table"
 import {
   IntegrationsToolbar,
@@ -13,6 +14,7 @@ import {
   EMPTY_FILTER_SELECTIONS,
   filterIntegrations,
   getVisibleFilterTags,
+  hasActiveIntegrationFilters,
   type IntegrationFilterSelections,
 } from "@/lib/filter-integrations"
 import {
@@ -40,6 +42,7 @@ export function IntegrationsContent({
   const [selections, setSelections] =
     useState<IntegrationFilterSelections>(EMPTY_FILTER_SELECTIONS)
   const [filterDraftIds, setFilterDraftIds] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
   const filterStateRef = useRef({
     openFilterId,
     openFilterAnchor,
@@ -73,8 +76,13 @@ export function IntegrationsContent({
       statusTab === "connected"
         ? INTEGRATIONS.filter((item) => isConnected(item.id))
         : INTEGRATIONS
-    return filterIntegrations(byStatus, selections)
-  }, [selections, statusTab, isConnected])
+    return filterIntegrations(byStatus, selections, searchQuery)
+  }, [isConnected, searchQuery, selections, statusTab])
+
+  const hasActiveSearchOrFilters = hasActiveIntegrationFilters(
+    selections,
+    searchQuery
+  )
 
   const pinFilter = useCallback((filterId: FilterType) => {
     setPinnedFilterIds((current) =>
@@ -181,16 +189,26 @@ export function IntegrationsContent({
     [closeFilter, unpinFilter]
   )
 
+  const handleClearAll = useCallback(() => {
+    setSearchQuery("")
+    setSelections(EMPTY_FILTER_SELECTIONS)
+    setPinnedFilterIds([])
+    closeFilter()
+  }, [closeFilter])
+
   return (
     <div
       className={cn(
         "flex flex-col gap-3",
-        view === "list" && "min-h-0 flex-1"
+        (view === "list" || (view === "grid" && filteredIntegrations.length === 0)) &&
+          "min-h-0 flex-1"
       )}
     >
       <IntegrationsToolbar
         view={view}
         onViewChange={onViewChange}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
         openFilterId={openFilterId}
         openFilterAnchor={openFilterAnchor}
         selections={selections}
@@ -203,7 +221,14 @@ export function IntegrationsContent({
         onRemoveFilter={handleRemoveFilter}
       />
       {view === "grid" ? (
-        <IntegrationGrid items={filteredIntegrations} />
+        filteredIntegrations.length === 0 && hasActiveSearchOrFilters ? (
+          <IntegrationsEmptyState
+            className="min-h-0 flex-1"
+            onClearFilters={handleClearAll}
+          />
+        ) : (
+          <IntegrationGrid items={filteredIntegrations} />
+        )
       ) : (
         <IntegrationTable
           items={filteredIntegrations}
@@ -214,6 +239,9 @@ export function IntegrationsContent({
           onFilterOpenChange={handleTableFilterOpenChange}
           onFilterDraftIdsChange={setFilterDraftIds}
           onFilterApply={handleFilterApply}
+          onClearFilters={
+            hasActiveSearchOrFilters ? handleClearAll : undefined
+          }
         />
       )}
     </div>

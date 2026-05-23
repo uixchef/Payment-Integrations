@@ -10,11 +10,12 @@ import {
 } from "@/components/ui/tooltip"
 import {
   chunkCountryTooltipRows,
-  DEFAULT_EXTRA_COUNTRY_TOOLTIP_LAYOUT,
+  DEFAULT_EXTRA_COUNTRY_TOOLTIP,
   getCountryLabel,
   type CountryTooltipSegment,
 } from "@/lib/country-labels"
-import { filterFlagAsset } from "@/lib/integration-assets"
+import { getIntegrationCountries } from "@/lib/integration-countries"
+import { flagAsset } from "@/lib/integration-assets"
 import { cn } from "@/lib/utils"
 
 const tagLabelClassName =
@@ -23,11 +24,17 @@ const tagLabelClassName =
 const tagShellClassName =
   "inline-flex h-7 max-h-7 min-h-7 shrink-0 items-center justify-center gap-0.5 rounded bg-[#f2f4f7] px-2"
 
+/** Extra countries that fit in the tooltip without a side-panel CTA. */
+export const VIEW_ALL_CTA_THRESHOLD = 2
+
+/** Max countries previewed in the +N tooltip before "Click to view all". */
+export const TOOLTIP_PREVIEW_COUNT = 10
+
 function CountryTag({ code }: { code: string }) {
   return (
     <span className={tagShellClassName}>
       <Image
-        src={filterFlagAsset(code)}
+        src={flagAsset(code)}
         alt=""
         width={16}
         height={16}
@@ -71,7 +78,7 @@ function TooltipTagRow({
   onViewAll?: () => void
 }) {
   return (
-    <div className="flex w-fit items-center gap-1">
+    <div className="flex w-fit flex-wrap items-center gap-1">
       {segments.map((segment, index) => {
         if (typeof segment === "string") {
           return <CountryTag key={segment} code={segment} />
@@ -92,9 +99,11 @@ function TooltipTagRow({
 
 function CountryTooltipContent({
   layout,
+  showViewAll,
   onViewAll,
 }: {
   layout: CountryTooltipSegment[][]
+  showViewAll: boolean
   onViewAll?: () => void
 }) {
   return (
@@ -103,7 +112,7 @@ function CountryTooltipContent({
         <TooltipTagRow
           key={`row-${index}`}
           segments={row}
-          showViewAll={index === layout.length - 1}
+          showViewAll={showViewAll && index === layout.length - 1}
           onViewAll={onViewAll}
         />
       ))}
@@ -111,27 +120,71 @@ function CountryTooltipContent({
   )
 }
 
-function buildTooltipLayout(tooltipFlags?: string[]): CountryTooltipSegment[][] {
-  if (tooltipFlags && tooltipFlags.length > 0) {
-    return chunkCountryTooltipRows(tooltipFlags).map((row) => [...row])
+function getTooltipCountryCodes({
+  integrationId,
+  visibleFlags,
+  tooltipFlags,
+}: {
+  integrationId?: string
+  visibleFlags?: string[]
+  tooltipFlags?: string[]
+}): string[] {
+  const visible = new Set(visibleFlags ?? [])
+
+  if (integrationId) {
+    const providerCodes = getIntegrationCountries(integrationId).map(
+      (country) => country.code
+    )
+    const hidden = providerCodes.filter((code) => !visible.has(code))
+    if (hidden.length > 0) {
+      return hidden
+    }
   }
 
-  return DEFAULT_EXTRA_COUNTRY_TOOLTIP_LAYOUT
+  if (tooltipFlags && tooltipFlags.length > 0) {
+    const hidden = tooltipFlags.filter((code) => !visible.has(code))
+    if (hidden.length > 0) {
+      return hidden
+    }
+    return tooltipFlags
+  }
+
+  return DEFAULT_EXTRA_COUNTRY_TOOLTIP.filter((code) => !visible.has(code))
+}
+
+function buildTooltipLayout(codes: string[]): CountryTooltipSegment[][] {
+  return chunkCountryTooltipRows(codes).map((row) => [...row])
 }
 
 export function ExtraCountBadge({
   count,
+  integrationId,
+  visibleFlags,
   tooltipFlags,
   index,
   onViewAll,
 }: {
   count: number
+  integrationId?: string
+  visibleFlags?: string[]
   tooltipFlags?: string[]
   index: number
   onViewAll?: () => void
 }) {
   const [tooltipOpen, setTooltipOpen] = useState(false)
-  const layout = buildTooltipLayout(tooltipFlags)
+  const allCodes = getTooltipCountryCodes({
+    integrationId,
+    visibleFlags,
+    tooltipFlags,
+  })
+  const showViewAllCta =
+    Boolean(onViewAll) &&
+    (count > VIEW_ALL_CTA_THRESHOLD || allCodes.length > TOOLTIP_PREVIEW_COUNT)
+  const previewCount = showViewAllCta
+    ? TOOLTIP_PREVIEW_COUNT
+    : Math.min(allCodes.length, TOOLTIP_PREVIEW_COUNT)
+  const previewCodes = allCodes.slice(0, previewCount)
+  const layout = buildTooltipLayout(previewCodes)
 
   const handleViewAll = () => {
     setTooltipOpen(false)
@@ -181,7 +234,11 @@ export function ExtraCountBadge({
           }
         }}
       >
-        <CountryTooltipContent layout={layout} onViewAll={handleViewAll} />
+        <CountryTooltipContent
+          layout={layout}
+          showViewAll={showViewAllCta}
+          onViewAll={showViewAllCta ? handleViewAll : undefined}
+        />
       </TooltipContent>
     </Tooltip>
   )

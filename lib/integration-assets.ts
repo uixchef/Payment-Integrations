@@ -31,6 +31,7 @@ export const INTEGRATION_ASSETS = {
     public: "/integrations/table/public.svg",
     filterLines: "/integrations/table/filter-lines.svg",
     highlightMouseCursor: "/integrations/table/highlight-mouse-cursor.svg",
+    sell: "/integrations/table/sell.png",
   },
   toolbar: {
     grid: "/integrations/toolbar/grid.svg",
@@ -39,6 +40,12 @@ export const INTEGRATION_ASSETS = {
   filters: {
     earth: "/integrations/filters/earth.png",
     flags: "/integrations/filters/flags",
+  },
+  countries: {
+    emptyState: "/integrations/countries/empty-state.png",
+  },
+  emptyState: {
+    filters: "/integrations/empty-state-filters.png",
   },
   banner: {
     stepArrow: "/integrations/banner/step-arrow.svg",
@@ -60,6 +67,7 @@ export function flagAsset(code: string) {
   return `/integrations/no-providers-connected/flags/${code}.svg`
 }
 
+/** Filter/tooltip chips — uses the same flag SVGs as integration cards. */
 export function filterFlagAsset(code: string) {
-  return `${INTEGRATION_ASSETS.filters.flags}/${code}.png`
+  return flagAsset(code)
 }

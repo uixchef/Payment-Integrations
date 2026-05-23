@@ -25,6 +25,10 @@ const VARIANT_STYLES: Record<
   },
 }
 
+export type ConfirmationDialogFooterLayout = "end" | "split"
+
+export type ConfirmationDialogCancelVariant = "neutral" | "warning-outline"
+
 export type ConfirmationDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -33,6 +37,8 @@ export type ConfirmationDialogProps = {
   confirmLabel: string
   cancelLabel?: string
   variant?: ConfirmationDialogVariant
+  footerLayout?: ConfirmationDialogFooterLayout
+  cancelVariant?: ConfirmationDialogCancelVariant
   /** Override the default header icon (defaults to AlertTriangle). */
   icon?: React.ReactNode
   onConfirm: () => void
@@ -47,11 +53,17 @@ export function ConfirmationDialog({
   confirmLabel,
   cancelLabel = "Cancel",
   variant = "warning",
+  footerLayout = "end",
+  cancelVariant = "neutral",
   icon,
   onConfirm,
   onCancel,
 }: ConfirmationDialogProps) {
   const styles = VARIANT_STYLES[variant]
+
+  const handleDismiss = () => {
+    onOpenChange(false)
+  }
 
   const handleCancel = () => {
     onCancel?.()
@@ -74,8 +86,8 @@ export function ConfirmationDialog({
           )}
         />
         <DialogPrimitive.Content
-          onEscapeKeyDown={handleCancel}
-          onPointerDownOutside={handleCancel}
+          onEscapeKeyDown={handleDismiss}
+          onPointerDownOutside={handleDismiss}
           className={cn(
             "fixed left-1/2 top-1/2 z-[101] w-[483px] max-w-[calc(100vw-2rem)]",
             "-translate-x-1/2 -translate-y-1/2",
@@ -128,8 +140,22 @@ export function ConfirmationDialog({
 
           <div className="flex w-full flex-col pb-3">
             <div className="h-px w-full bg-[#eaecf0]" />
-            <div className="flex items-center justify-end gap-3 px-4 pt-3">
-              <Button type="button" variant="neutral" onClick={handleCancel} className="px-2.5">
+            <div
+              className={cn(
+                "flex items-center gap-4 px-4 pt-3",
+                footerLayout === "split" ? "justify-between" : "justify-end"
+              )}
+            >
+              <Button
+                type="button"
+                variant="neutral"
+                onClick={handleCancel}
+                className={cn(
+                  "px-2.5",
+                  cancelVariant === "warning-outline" &&
+                    "border-[#fec84b] bg-white text-[#b54708] hover:border-[#fec84b] hover:bg-[#fffaeb] hover:text-[#b54708]"
+                )}
+              >
                 {cancelLabel}
               </Button>
               <button

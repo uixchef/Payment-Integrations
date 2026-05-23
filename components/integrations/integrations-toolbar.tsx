@@ -47,6 +47,8 @@ function ListViewIcon({ className }: { className?: string }) {
 type IntegrationsToolbarProps = {
   view: IntegrationsViewMode
   onViewChange: (view: IntegrationsViewMode) => void
+  searchQuery: string
+  onSearchChange: (query: string) => void
   openFilterId: FilterType | null
   openFilterAnchor: IntegrationFilterAnchor | null
   selections: IntegrationFilterSelections
@@ -62,6 +64,8 @@ type IntegrationsToolbarProps = {
 export function IntegrationsToolbar({
   view,
   onViewChange,
+  searchQuery,
+  onSearchChange,
   openFilterId,
   openFilterAnchor,
   selections,
@@ -100,6 +104,8 @@ export function IntegrationsToolbar({
           />
           <Input
             type="search"
+            value={searchQuery}
+            onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Search by provider, method, or country"
             aria-label="Search integrations"
             className="pl-8"

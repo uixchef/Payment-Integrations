@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
   LogOut,
@@ -30,6 +31,8 @@ import { useStripeAccounts } from "@/components/integrations/settings/stripe/str
 import { StripeEmptyState } from "@/components/integrations/settings/stripe/stripe-empty-state"
 import { StripeGuide } from "@/components/integrations/settings/stripe/stripe-guide"
 import { StripeSyncCard } from "@/components/integrations/settings/stripe/stripe-sync-card"
+import { StripeSyncImportingModal } from "@/components/integrations/settings/stripe/sync/stripe-sync-importing-modal"
+import { STRIPE_SYNC_COUNTS } from "@/components/integrations/settings/stripe/sync/sync-mock-data"
 import { INTEGRATION_ASSETS } from "@/lib/integration-assets"
 import type { IntegrationItem } from "@/lib/integrations-data"
 import { useIntegrationStatus } from "@/lib/integration-status-context"
@@ -67,6 +70,7 @@ function splitVisibility(
 }
 
 export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
+  const router = useRouter()
   const {
     isConnected: isConnectedFromStatus,
     isDefault: isDefaultFromStatus,
@@ -95,6 +99,8 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
     renameActiveAccount,
     updateActiveAccount,
     removeActiveAccount,
+    getAccountSyncState,
+    clearAccountSync,
   } = useStripeAccounts()
 
   const [showSwitchDefaultModal, setShowSwitchDefaultModal] = useState(false)
@@ -102,6 +108,10 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
   const [accountDialogMode, setAccountDialogMode] = useState<
     "add" | "edit" | null
   >(null)
+  const [importingModalOpen, setImportingModalOpen] = useState(false)
+
+  const syncState = getAccountSyncState(activeAccountId)
+  const stripeLogo = item.logo ?? INTEGRATION_ASSETS.logos.stripe
 
   const handleConnect = () => {
     if (accounts.length === 0) {
@@ -163,6 +173,9 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
         onSelectAccount={setActiveAccountId}
         onAddAccount={() => setAccountDialogMode("add")}
         onSetAsDefault={handleSetAsDefault}
+        onOpenPaymentMethods={() =>
+          router.push("/integrations/stripe/payment-methods")
+        }
       />
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
@@ -198,6 +211,20 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
               <div className="flex flex-col gap-4">
                 <StripeSyncCard
                   enabled={Boolean(activeAccount?.connected)}
+                  syncState={syncState}
+                  onViewDetails={() => {
+                    if (syncState?.status === "in-progress") {
+                      setImportingModalOpen(true)
+                      return
+                    }
+                    if (syncState?.status === "completed") {
+                      router.push("/integrations/stripe/sync?view=results")
+                    }
+                  }}
+                  onResync={() => {
+                    if (activeAccountId) clearAccountSync(activeAccountId)
+                    router.push("/integrations/stripe/sync")
+                  }}
                   onSync={() => {
                     /* mock: trigger a real Stripe sync here */
                   }}
@@ -236,6 +263,21 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
             handleRenameActiveAccount(label)
           }
         }}
+      />
+
+      <StripeSyncImportingModal
+        open={importingModalOpen}
+        onOpenChange={setImportingModalOpen}
+        logo={stripeLogo}
+        summary={
+          syncState && syncState.status !== "incomplete"
+            ? syncState.summary
+            : {
+                subscriptions: STRIPE_SYNC_COUNTS.subscriptions,
+                contacts: STRIPE_SYNC_COUNTS.contacts,
+                paymentMethods: STRIPE_SYNC_COUNTS.notEligible,
+              }
+        }
       />
 
       <ConfirmationDialog
@@ -302,6 +344,7 @@ function SubHeader({
   onSelectAccount,
   onAddAccount,
   onSetAsDefault,
+  onOpenPaymentMethods,
 }: {
   item: IntegrationItem
   accounts: StripeAccount[]
@@ -313,6 +356,7 @@ function SubHeader({
   onSelectAccount: (id: string) => void
   onAddAccount: () => void
   onSetAsDefault: () => void
+  onOpenPaymentMethods: () => void
 }) {
   const activeIsDefaultAccount =
     isDefault && activeAccountId !== null && activeAccountId === defaultAccountId
@@ -329,15 +373,15 @@ function SubHeader({
     splitVisibility(accounts, activeAccountId)
 
   return (
-    <header className="flex h-[62px] shrink-0 items-center gap-3 border-b border-[#d0d5dd] bg-white px-4">
+    <header className="flex h-[62px] shrink-0 items-stretch gap-3 bg-white px-4 shadow-[inset_0_-1px_0_#d0d5dd]">
       <Link
         href="/integrations"
         aria-label="Back to integrations"
-        className="flex size-6 shrink-0 items-center justify-center rounded text-[#101828] outline-none transition-colors hover:bg-[#f2f4f7] focus-visible:ring-2 focus-visible:ring-[#84adff]"
+        className="flex size-6 shrink-0 items-center justify-center self-center rounded text-[#101828] outline-none transition-colors hover:bg-[#f2f4f7] focus-visible:ring-2 focus-visible:ring-[#84adff]"
       >
         <ArrowLeft className="size-5" strokeWidth={1.75} aria-hidden />
       </Link>
-      <div className="flex min-w-0 items-center gap-1">
+      <div className="flex min-w-0 items-center gap-1 self-center">
         <span className="relative flex size-6 shrink-0 items-center justify-center overflow-hidden rounded">
           <Image
             src={logo}
@@ -355,7 +399,7 @@ function SubHeader({
       </div>
 
       {showAccountTabs ? (
-        <div className="flex min-w-0 flex-1 items-center gap-2 self-stretch">
+        <div className="flex h-[62px] min-w-0 flex-1 items-center gap-2">
           <div className="flex h-full min-w-0 items-center gap-2 overflow-x-auto">
             {visibleAccounts.map((account) => {
               const active = account.id === activeAccountId
@@ -428,6 +472,7 @@ function SubHeader({
             <Button
               type="button"
               variant="outline"
+              onClick={onOpenPaymentMethods}
               className={cn(
                 "h-9 gap-2 rounded px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 shadow-none",
                 "border-[#84adff] bg-white text-[#004eeb] shadow-[0_1px_2px_rgba(16,24,40,0.05)]",

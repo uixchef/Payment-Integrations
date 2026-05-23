@@ -186,3 +186,62 @@ export function filterIntegrationCountries(
     )
   })
 }
+
+const COUNTRY_CONTINENT = (() => {
+  const map = new Map<string, Continent>()
+
+  for (const countries of Object.values(INTEGRATION_COUNTRIES)) {
+    for (const { code, continent } of countries) {
+      map.set(code, continent)
+    }
+  }
+
+  const extras: Array<[string, Continent]> = [
+    ["NZ", "Oceania"],
+    ["CZ", "Europe"],
+    ["RO", "Europe"],
+    ["BE", "Europe"],
+    ["NL", "Europe"],
+    ["AT", "Europe"],
+    ["GR", "Europe"],
+    ["PL", "Europe"],
+  ]
+
+  for (const [code, continent] of extras) {
+    if (!map.has(code)) {
+      map.set(code, continent)
+    }
+  }
+
+  return map
+})()
+
+export function getCountryContinent(code: string): Continent {
+  return COUNTRY_CONTINENT.get(code) ?? "Europe"
+}
+
+export function countriesFromCodes(codes: string[]): IntegrationCountry[] {
+  const seen = new Set<string>()
+
+  return codes
+    .filter((code) => {
+      if (seen.has(code)) {
+        return false
+      }
+
+      seen.add(code)
+      return true
+    })
+    .map((code) => ({
+      code,
+      continent: getCountryContinent(code),
+    }))
+    .sort((left, right) => {
+      const continentCompare = left.continent.localeCompare(right.continent)
+      if (continentCompare !== 0) {
+        return continentCompare
+      }
+
+      return getCountryLabel(left.code).localeCompare(getCountryLabel(right.code))
+    })
+}

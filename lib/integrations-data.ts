@@ -83,7 +83,6 @@ export const INTEGRATIONS: IntegrationItem[] = [
     },
     verified: true,
     logo: INTEGRATION_ASSETS.logos.authorizeNet,
-    connected: true,
   },
   {
     id: "manual",
@@ -102,7 +101,6 @@ export const INTEGRATIONS: IntegrationItem[] = [
     methods: "Cards · Wallets · Bank transfers · Buy now, pay later",
     availability: { kind: "flags", flags: ["IN"] },
     logo: INTEGRATION_ASSETS.logos.razorpay,
-    connected: true,
   },
   {
     id: "easy-pay-direct",

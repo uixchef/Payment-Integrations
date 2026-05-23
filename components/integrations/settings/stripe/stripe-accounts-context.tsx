@@ -3,6 +3,17 @@
 import * as React from "react"
 
 import type { StripeAccount } from "@/components/integrations/settings/stripe/stripe-account-config"
+import {
+  createStripeSyncIncomplete,
+  type StripeSyncDraft,
+} from "@/components/integrations/settings/stripe/sync/stripe-sync-draft"
+import {
+  createStripeSyncCompleted,
+  createStripeSyncProgress,
+  STRIPE_SYNC_COMPLETE_DELAY_MS,
+  type StripeSyncState,
+  type StripeSyncSummaryInput,
+} from "@/components/integrations/settings/stripe/sync/stripe-sync-progress"
 
 const SEEDED_ACCOUNT: StripeAccount = {
   id: "account-1",
@@ -74,6 +85,11 @@ type StripeAccountsContextValue = {
     remainingCount: number
     nextActiveAccountId: string | null
   }
+
+  getAccountSyncState: (accountId: string | null) => StripeSyncState | null
+  startAccountSync: (accountId: string, summary: StripeSyncSummaryInput) => void
+  saveIncompleteSync: (accountId: string, draft: StripeSyncDraft) => void
+  clearAccountSync: (accountId: string) => void
 }
 
 const StripeAccountsContext = React.createContext<
@@ -92,6 +108,17 @@ export function StripeAccountsProvider({
   const [defaultAccountId, setDefaultAccountId] = React.useState<string | null>(
     null
   )
+  const [syncProgressByAccountId, setSyncProgressByAccountId] = React.useState<
+    Record<string, StripeSyncState>
+  >({})
+  const syncCompleteTimersRef = React.useRef<Record<string, number>>({})
+
+  React.useEffect(() => {
+    const timers = syncCompleteTimersRef.current
+    return () => {
+      Object.values(timers).forEach(window.clearTimeout)
+    }
+  }, [])
 
   const activeAccount = React.useMemo(
     () => accounts.find((account) => account.id === activeAccountId) ?? null,
@@ -186,6 +213,71 @@ export function StripeAccountsProvider({
     }
   }, [accounts, activeAccountId, defaultAccountId])
 
+  const getAccountSyncState = React.useCallback<
+    StripeAccountsContextValue["getAccountSyncState"]
+  >(
+    (accountId) =>
+      accountId ? (syncProgressByAccountId[accountId] ?? null) : null,
+    [syncProgressByAccountId]
+  )
+
+  const clearAccountSync = React.useCallback<
+    StripeAccountsContextValue["clearAccountSync"]
+  >((accountId) => {
+    const timer = syncCompleteTimersRef.current[accountId]
+    if (timer) {
+      window.clearTimeout(timer)
+      delete syncCompleteTimersRef.current[accountId]
+    }
+    setSyncProgressByAccountId((current) => {
+      if (!(accountId in current)) return current
+      const next = { ...current }
+      delete next[accountId]
+      return next
+    })
+  }, [])
+
+  const saveIncompleteSync = React.useCallback<
+    StripeAccountsContextValue["saveIncompleteSync"]
+  >((accountId, draft) => {
+    const timer = syncCompleteTimersRef.current[accountId]
+    if (timer) {
+      window.clearTimeout(timer)
+      delete syncCompleteTimersRef.current[accountId]
+    }
+    setSyncProgressByAccountId((current) => ({
+      ...current,
+      [accountId]: createStripeSyncIncomplete(draft),
+    }))
+  }, [])
+
+  const startAccountSync = React.useCallback<
+    StripeAccountsContextValue["startAccountSync"]
+  >((accountId, summary) => {
+    const progress = createStripeSyncProgress(summary)
+    setSyncProgressByAccountId((current) => ({
+      ...current,
+      [accountId]: progress,
+    }))
+
+    const existingTimer = syncCompleteTimersRef.current[accountId]
+    if (existingTimer) {
+      window.clearTimeout(existingTimer)
+    }
+
+    syncCompleteTimersRef.current[accountId] = window.setTimeout(() => {
+      setSyncProgressByAccountId((current) => {
+        const active = current[accountId]
+        if (active?.status !== "in-progress") return current
+        return {
+          ...current,
+          [accountId]: createStripeSyncCompleted(active),
+        }
+      })
+      delete syncCompleteTimersRef.current[accountId]
+    }, STRIPE_SYNC_COMPLETE_DELAY_MS)
+  }, [])
+
   const value = React.useMemo<StripeAccountsContextValue>(
     () => ({
       accounts,
@@ -200,6 +292,10 @@ export function StripeAccountsProvider({
       renameActiveAccount,
       updateActiveAccount,
       removeActiveAccount,
+      getAccountSyncState,
+      startAccountSync,
+      saveIncompleteSync,
+      clearAccountSync,
     }),
     [
       accounts,
@@ -212,6 +308,10 @@ export function StripeAccountsProvider({
       renameActiveAccount,
       updateActiveAccount,
       removeActiveAccount,
+      getAccountSyncState,
+      startAccountSync,
+      saveIncompleteSync,
+      clearAccountSync,
     ]
   )
 

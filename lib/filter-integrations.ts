@@ -1,5 +1,6 @@
 import type { FilterType } from "@/lib/integration-filters"
 import type { IntegrationItem } from "@/lib/integrations-data"
+import { getCountryLabel } from "@/lib/country-labels"
 
 export type IntegrationFilterSelections = Record<FilterType, string[]>
 
@@ -70,20 +71,52 @@ function matchesGeographicLocation(
   return false
 }
 
+function matchesSearch(item: IntegrationItem, searchQuery: string): boolean {
+  const normalized = searchQuery.trim().toLowerCase()
+  if (!normalized) {
+    return true
+  }
+
+  const searchable = [
+    item.name,
+    item.methods,
+    item.availability.kind === "global" ? item.availability.label : "",
+    ...(item.availability.kind === "flags"
+      ? item.availability.flags.map((code) => getCountryLabel(code))
+      : []),
+  ]
+
+  return searchable.join(" ").toLowerCase().includes(normalized)
+}
+
 export function filterIntegrations(
   items: IntegrationItem[],
-  selections: IntegrationFilterSelections
+  selections: IntegrationFilterSelections,
+  searchQuery = ""
 ): IntegrationItem[] {
   const paymentMethods = selections["payment-methods"]
   const geographic = selections["geographic-location"]
 
+  const searchMatches = items.filter((item) => matchesSearch(item, searchQuery))
+
   if (paymentMethods.length === 0 && geographic.length === 0) {
-    return items
+    return searchMatches
   }
 
-  return items.filter(
+  return searchMatches.filter(
     (item) =>
       matchesPaymentMethods(item, paymentMethods) &&
       matchesGeographicLocation(item, geographic)
+  )
+}
+
+export function hasActiveIntegrationFilters(
+  selections: IntegrationFilterSelections,
+  searchQuery: string
+): boolean {
+  return (
+    searchQuery.trim().length > 0 ||
+    selections["payment-methods"].length > 0 ||
+    selections["geographic-location"].length > 0
   )
 }

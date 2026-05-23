@@ -7,12 +7,17 @@ export type FilterOption = {
   flagCode?: string
 }
 
+export type FilterSelectionMode = "single" | "multi"
+
 export type FilterDefinition = {
-  id: FilterType
+  id: string
   tagLabel: string
   menuLabel: string
   emptyStatus: string
   options: FilterOption[]
+  selectionMode?: FilterSelectionMode
+  showStatusBar?: boolean
+  showFooter?: boolean
 }
 
 export const FILTER_DEFINITIONS: Record<FilterType, FilterDefinition> = {
@@ -58,4 +63,7 @@ export const FILTER_DEFINITIONS: Record<FilterType, FilterDefinition> = {
   },
 }
 
-export const ADD_FILTER_OPTIONS = Object.values(FILTER_DEFINITIONS)
+export const ADD_FILTER_OPTIONS = Object.values(FILTER_DEFINITIONS) as Array<{
+  id: FilterType
+  menuLabel: string
+}>

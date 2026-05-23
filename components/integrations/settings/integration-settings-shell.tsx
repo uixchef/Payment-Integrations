@@ -3,15 +3,9 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowLeft, ChevronDown } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import {
   AuthorizeNetSettingsForm,
@@ -95,16 +89,9 @@ function SubHeader({
   )
 }
 
-type ManageMenuItem = {
-  label: string
-  destructive?: boolean
-  onSelect: () => void
-}
-
 type FooterAction =
   | { kind: "primary"; label: string; disabled: boolean; onClick: () => void }
   | { kind: "destructive"; label: string; onClick: () => void }
-  | { kind: "manage"; label: string; items: ManageMenuItem[] }
 
 function ContentFooter({ action }: { action: FooterAction }) {
   return (
@@ -124,7 +111,7 @@ function ContentFooter({ action }: { action: FooterAction }) {
           >
             {action.label}
           </Button>
-        ) : action.kind === "destructive" ? (
+        ) : (
           <Button
             type="button"
             variant="outline"
@@ -137,37 +124,6 @@ function ContentFooter({ action }: { action: FooterAction }) {
           >
             {action.label}
           </Button>
-        ) : (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                className={cn(
-                  "h-9 gap-1.5 rounded px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-white",
-                  "bg-[#155eef] hover:bg-[#004eeb] data-[state=open]:bg-[#004eeb]"
-                )}
-              >
-                {action.label}
-                <ChevronDown className="size-4" strokeWidth={2} aria-hidden />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" sideOffset={6} className="min-w-[180px]">
-              {action.items.map((item) => (
-                <DropdownMenuItem
-                  key={item.label}
-                  onSelect={(event) => {
-                    event.preventDefault()
-                    item.onSelect()
-                  }}
-                  className={cn(
-                    item.destructive && "text-[#b42318] focus:bg-[#fef3f2] data-[highlighted]:bg-[#fef3f2]"
-                  )}
-                >
-                  {item.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
         )}
       </div>
     </footer>
@@ -252,17 +208,6 @@ export function IntegrationSettingsShell({ item }: { item: IntegrationItem }) {
     }
   }
 
-  const handleDisconnect = () => {
-    setConnected(item.id, false)
-    setIsReconnecting(false)
-    if (item.id === "razorpay") {
-      setRazorpayForm(INITIAL_RAZORPAY)
-    }
-    if (item.id === "authorize-net") {
-      setAuthorizeNetForm(INITIAL_AUTHORIZE_NET)
-    }
-  }
-
   const handleReconnect = () => {
     setIsReconnecting(true)
   }
@@ -283,6 +228,10 @@ export function IntegrationSettingsShell({ item }: { item: IntegrationItem }) {
 
   const handleConfirmSwitchDefault = () => {
     setDefaultProvider(item.id)
+  }
+
+  const handleManage = () => {
+    // Destination screens will be wired when provided.
   }
 
   const footerAction: FooterAction = (() => {
@@ -315,15 +264,10 @@ export function IntegrationSettingsShell({ item }: { item: IntegrationItem }) {
 
     if (isConnected) {
       return {
-        kind: "manage",
+        kind: "primary",
         label: "Manage",
-        items: [
-          {
-            label: "Disconnect",
-            destructive: true,
-            onSelect: handleDisconnect,
-          },
-        ],
+        disabled: false,
+        onClick: handleManage,
       }
     }
 

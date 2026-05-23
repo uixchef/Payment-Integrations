@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { IntegrationAvailability } from "@/components/integrations/integration-availability"
 import { IntegrationProviderIdentity } from "@/components/integrations/integration-provider-identity"
+import { IntegrationsEmptyState } from "@/components/integrations/integrations-empty-state"
 import { IntegrationsPagination } from "@/components/integrations/integrations-pagination"
 import {
   FilterDropdownPopover,
@@ -193,6 +194,7 @@ type IntegrationTableProps = {
   onFilterOpenChange: (filterId: FilterType, open: boolean) => void
   onFilterDraftIdsChange: (ids: string[]) => void
   onFilterApply: (filterId: FilterType, ids: string[]) => void
+  onClearFilters?: () => void
 }
 
 export function IntegrationTable({
@@ -205,6 +207,7 @@ export function IntegrationTable({
   onFilterOpenChange,
   onFilterDraftIdsChange,
   onFilterApply,
+  onClearFilters,
 }: IntegrationTableProps) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
@@ -214,6 +217,7 @@ export function IntegrationTable({
   }, [items])
 
   const needsPagination = items.length >= INTEGRATIONS_TABLE_PAGINATION_THRESHOLD
+  const isEmpty = items.length === 0
 
   const displayItems = useMemo(() => {
     if (!needsPagination) {
@@ -234,7 +238,7 @@ export function IntegrationTable({
       <div
         className={cn(
           "grid w-full max-h-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded border border-[#d0d5dd] bg-white",
-          needsPagination ? "min-h-0 flex-1" : "h-fit"
+          isEmpty || needsPagination ? "min-h-0 flex-1" : "h-fit"
         )}
       >
         <div className="overflow-x-auto">
@@ -304,12 +308,23 @@ export function IntegrationTable({
           </div>
         </div>
 
-        <div className="min-h-0 overflow-x-auto overflow-y-auto overscroll-y-contain">
-          <div className="min-w-[800px]" role="rowgroup">
-            {displayItems.map((item) => (
-              <TableRow key={item.id} item={item} />
-            ))}
-          </div>
+        <div
+          className={cn(
+            "min-h-0 overscroll-y-contain",
+            isEmpty && onClearFilters
+              ? "h-full overflow-x-auto overflow-y-hidden"
+              : "overflow-x-auto overflow-y-auto"
+          )}
+        >
+          {isEmpty && onClearFilters ? (
+            <IntegrationsEmptyState onClearFilters={onClearFilters} />
+          ) : (
+            <div className="min-w-[800px]" role="rowgroup">
+              {displayItems.map((item) => (
+                <TableRow key={item.id} item={item} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
