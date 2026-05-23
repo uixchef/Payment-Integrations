@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
@@ -162,6 +163,7 @@ const SEEDED_AUTHORIZE_NET: AuthorizeNetFormState = {
 }
 
 export function IntegrationSettingsShell({ item }: { item: IntegrationItem }) {
+  const router = useRouter()
   const {
     isConnected: isConnectedFromStatus,
     isDefault: isDefaultFromStatus,
@@ -233,10 +235,19 @@ export function IntegrationSettingsShell({ item }: { item: IntegrationItem }) {
   }
 
   const handleManage = () => {
-    // Destination screens will be wired when provided.
+    router.push(`/integrations/${item.id}/manage`)
   }
 
   const footerAction: FooterAction = (() => {
+    if (item.id === "razorpay") {
+      return {
+        kind: "primary",
+        label: "Manage",
+        disabled: false,
+        onClick: handleManage,
+      }
+    }
+
     if (item.id === "authorize-net") {
       if (!isConnected) {
         return {
