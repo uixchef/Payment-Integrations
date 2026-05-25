@@ -291,7 +291,7 @@ export function Topbar() {
               ) : null}
               <Link
                 href="/integrations/configure"
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded border border-[#155eef] bg-[#155eef] px-2.5 py-1.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-white shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors hover:border-[#004eeb] hover:bg-[#004eeb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155eef]/40"
+                className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded border border-[#155eef] bg-[#155eef] px-2.5 py-1.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-white shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors hover:border-[#004eeb] hover:bg-[#004eeb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155eef]/40"
               >
                 <Settings04Icon className="text-white" />
                 Configure providers

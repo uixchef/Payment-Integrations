@@ -22,7 +22,6 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { AddAccountButton } from "@/components/integrations/settings/add-account-button"
-import { SetAsDefaultButton } from "@/components/integrations/settings/set-as-default-button"
 import { AddPayPalAccountDialog } from "@/components/integrations/settings/paypal/add-paypal-account-dialog"
 import {
   PayPalAccountConfig,
@@ -32,10 +31,6 @@ import { usePayPalAccounts } from "@/components/integrations/settings/paypal/pay
 import { PayPalGuide } from "@/components/integrations/settings/paypal/paypal-guide"
 import { INTEGRATION_ASSETS } from "@/lib/integration-assets"
 import { getAddAccountButtonState } from "@/lib/integration-account-limits"
-import {
-  getSetAsDefaultDisabledReason,
-  getSetAsDefaultTooltip,
-} from "@/lib/set-as-default-tooltip"
 import type { IntegrationItem } from "@/lib/integrations-data"
 import { useIntegrationStatus } from "@/lib/integration-status-context"
 import { cn } from "@/lib/utils"
@@ -72,16 +67,10 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
   const router = useRouter()
   const {
     isDefault: isDefaultFromStatus,
-    defaultProviderId,
-    getDefaultProviderName,
     setConnected,
-    setDefaultProvider,
   } = useIntegrationStatus()
 
   const isDefault = isDefaultFromStatus(item.id)
-  const currentDefaultName = getDefaultProviderName()
-  const otherDefaultProviderId =
-    defaultProviderId && defaultProviderId !== item.id ? defaultProviderId : null
 
   const {
     accounts,
@@ -89,7 +78,6 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
     activeAccountId,
     defaultAccountId,
     setActiveAccountId,
-    setDefaultAccountId,
     ensureInitialAccount,
     addPendingAccount,
     renameActiveAccount,
@@ -98,7 +86,6 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
     removeActiveAccount,
   } = usePayPalAccounts()
 
-  const [showSwitchDefaultModal, setShowSwitchDefaultModal] = useState(false)
   const [showDisconnectModal, setShowDisconnectModal] = useState(false)
   const [accountDialogMode, setAccountDialogMode] = useState<
     "add" | "edit" | null
@@ -133,26 +120,6 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
     }
   }
 
-  const handleSetAsDefault = () => {
-    if (!activeAccount?.connected) return
-    if (isDefault && activeAccountId === defaultAccountId) return
-
-    if (!isDefault && otherDefaultProviderId) {
-      setShowSwitchDefaultModal(true)
-      return
-    }
-
-    setDefaultAccountId(activeAccountId)
-    if (!isDefault) {
-      setDefaultProvider(item.id)
-    }
-  }
-
-  const handleConfirmSwitchDefault = () => {
-    setDefaultProvider(item.id)
-    setDefaultAccountId(activeAccountId)
-  }
-
   const canSave =
     Boolean(activeAccount?.clientId.trim()) &&
     Boolean(activeAccount?.secretId.trim()) &&
@@ -172,7 +139,6 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
         activeAccountConnected={Boolean(activeAccount?.connected)}
         onSelectAccount={setActiveAccountId}
         onAddAccount={() => setAccountDialogMode("add")}
-        onSetAsDefault={handleSetAsDefault}
         onOpenPaymentMethods={() =>
           router.push("/integrations/paypal/payment-methods")
         }
@@ -258,33 +224,6 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
         icon={<LogOut className="size-6" strokeWidth={1.75} aria-hidden />}
         onConfirm={handleDisconnect}
       />
-
-      <ConfirmationDialog
-        open={showSwitchDefaultModal}
-        onOpenChange={setShowSwitchDefaultModal}
-        title="Switch default payment provider?"
-        description={
-          currentDefaultName ? (
-            <>
-              <strong className="font-semibold text-[#101828]">
-                {currentDefaultName}
-              </strong>{" "}
-              is currently the default. Switching to{" "}
-              <strong className="font-semibold text-[#101828]">{item.name}</strong>{" "}
-              will route new transactions through it instead.
-            </>
-          ) : (
-            <>
-              Set <strong className="font-semibold text-[#101828]">{item.name}</strong>{" "}
-              as the default provider for new transactions?
-            </>
-          )
-        }
-        confirmLabel="Switch default"
-        cancelLabel="Cancel"
-        variant="warning"
-        onConfirm={handleConfirmSwitchDefault}
-      />
     </div>
   )
 }
@@ -298,7 +237,6 @@ function SubHeader({
   activeAccountConnected,
   onSelectAccount,
   onAddAccount,
-  onSetAsDefault,
   onOpenPaymentMethods,
 }: {
   item: IntegrationItem
@@ -309,23 +247,8 @@ function SubHeader({
   activeAccountConnected: boolean
   onSelectAccount: (id: string) => void
   onAddAccount: () => void
-  onSetAsDefault: () => void
   onOpenPaymentMethods: () => void
 }) {
-  const activeIsDefaultAccount =
-    isDefault && activeAccountId !== null && activeAccountId === defaultAccountId
-  const setAsDefaultState = getSetAsDefaultDisabledReason({
-    multiAccount: true,
-    isDefault,
-    activeAccountConnected,
-    activeIsDefaultAccount,
-  })
-  const setAsDefaultTooltip = getSetAsDefaultTooltip({
-    providerName: item.name,
-    multiAccount: true,
-    disabled: setAsDefaultState.disabled,
-    reason: setAsDefaultState.reason,
-  })
   const addAccountState = getAddAccountButtonState({
     accountsCount: accounts.length,
     hasConnectedAccount: accounts.some((account) => account.connected),
@@ -417,11 +340,6 @@ function SubHeader({
               <div className="ml-auto" />
 
               <div className="flex shrink-0 items-center gap-2">
-                <SetAsDefaultButton
-                  disabled={setAsDefaultState.disabled}
-                  tooltip={setAsDefaultTooltip}
-                  onClick={onSetAsDefault}
-                />
                 <Button
                   type="button"
                   variant="outline"
