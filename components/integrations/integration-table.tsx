@@ -28,7 +28,7 @@ const PROVIDERS_WITH_SETTINGS = new Set([
 ])
 
 const TABLE_COLUMNS =
-  "grid grid-cols-[minmax(240px,1.15fr)_minmax(220px,1fr)_minmax(220px,1fr)_120px]"
+  "grid grid-cols-[320px_minmax(220px,1fr)_minmax(220px,1fr)_120px]"
 
 const TABLE_ICONS = INTEGRATION_ASSETS.table
 
@@ -60,6 +60,7 @@ function TableHeaderCell({
   label,
   showFilter = true,
   centered = false,
+  last = false,
   filterId,
   filterOpen = false,
   onFilterOpenChange,
@@ -68,10 +69,11 @@ function TableHeaderCell({
   filterDraftIds,
   onFilterDraftIdsChange,
 }: {
-  iconSrc: string
+  iconSrc?: string
   label?: string
   showFilter?: boolean
   centered?: boolean
+  last?: boolean
   filterId?: FilterType
   filterOpen?: boolean
   onFilterOpenChange?: (open: boolean) => void
@@ -90,7 +92,8 @@ function TableHeaderCell({
   return (
     <div
       className={cn(
-        "flex h-9 items-center border-b border-r border-[#d0d5dd] bg-[#f2f4f7] px-3",
+        "flex h-9 items-center border-b border-[#d0d5dd] bg-[#f2f4f7] px-3",
+        !last && "border-r",
         centered && "justify-center"
       )}
     >
@@ -100,7 +103,9 @@ function TableHeaderCell({
           centered && "justify-center"
         )}
       >
-        <TableHeaderIcon src={iconSrc} className="size-4" />
+        {iconSrc ? (
+          <TableHeaderIcon src={iconSrc} className="size-4" />
+        ) : null}
         {label ? (
           <span className="min-w-0 flex-1 truncate font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-[#101828]">
             {label}
@@ -157,21 +162,20 @@ function TableRow({ item }: { item: IntegrationItem }) {
         "group [--card-surface-color:white] transition-colors hover:bg-[#f5f8ff] hover:[--card-surface-color:#f5f8ff]"
       )}
     >
-      <div className="flex h-16 w-full items-center border-b border-r border-[#d0d5dd] px-3 py-2">
+      <div className="flex h-16 w-full items-center border-b border-[#d0d5dd] px-3 py-2">
         <IntegrationProviderIdentity
           item={item}
           isDefault={defaultProvider}
-          alignBadgesEnd
         />
       </div>
 
-      <div className="flex h-16 items-center border-b border-r border-[#d0d5dd] px-3 py-2">
+      <div className="flex h-16 items-center border-b border-[#d0d5dd] px-3 py-2">
         <p className="truncate font-[family-name:var(--font-inter)] text-base font-medium leading-6 text-[#475467]">
           {item.methods}
         </p>
       </div>
 
-      <div className="flex h-16 items-center border-b border-r border-[#d0d5dd] px-3 py-2">
+      <div className="flex h-16 items-center border-b border-[#d0d5dd] px-3 py-2">
         <IntegrationAvailability item={item} />
       </div>
 
@@ -305,11 +309,7 @@ export function IntegrationTable({
                     : undefined
                 }
               />
-              <TableHeaderCell
-                iconSrc={TABLE_ICONS.highlightMouseCursor}
-                showFilter={false}
-                centered
-              />
+              <TableHeaderCell showFilter={false} last />
             </div>
           </div>
         </div>

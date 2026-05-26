@@ -45,16 +45,20 @@ export type ReviewSelections = {
 /**
  * Header and body cells share these base classes so the dense data tables in
  * the Stripe sync wizard read the same as the integrations dashboard and the
- * merchant-countries side panel: 36px tall rows, gray-100 header strip, gray
- * vertical dividers between columns.
+ * merchant-countries side panel: 36px tall rows, gray-100 header strip, vertical
+ * dividers between header columns only.
  */
 const HEADER_CELL =
-  "flex h-9 items-center border-b border-[#d0d5dd] bg-[#f2f4f7] px-3"
+  "flex h-9 min-w-0 items-center overflow-hidden border-b border-[#d0d5dd] bg-[#f2f4f7] px-3"
 const HEADER_LABEL =
   "min-w-0 flex-1 truncate font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-[#101828]"
-const BODY_CELL = "flex h-9 items-center border-b border-[#d0d5dd] px-3"
+const BODY_CELL =
+  "flex h-9 min-w-0 items-center overflow-hidden border-b border-[#d0d5dd] px-3"
 const BODY_TEXT =
-  "truncate font-[family-name:var(--font-inter)] text-base font-medium leading-6"
+  "min-w-0 truncate font-[family-name:var(--font-inter)] text-base font-medium leading-6"
+const BODY_ROW = "flex min-w-0 w-full items-center overflow-hidden"
+const BODY_PAYMENT_ROW =
+  "flex min-w-0 w-full items-center gap-1 overflow-hidden font-[family-name:var(--font-inter)] text-base font-medium leading-6 text-[#475467]"
 
 type IconComp = React.ComponentType<{
   className?: string
@@ -101,7 +105,6 @@ function BodyCell({
   children,
   tone = "primary",
   align = "left",
-  last = false,
 }: {
   children: React.ReactNode
   tone?: "primary" | "secondary" | "danger"
@@ -112,7 +115,6 @@ function BodyCell({
     <div
       className={cn(
         BODY_CELL,
-        !last && "border-r",
         align === "center" && "justify-center",
         align === "right" && "justify-end",
         tone === "primary" && "text-[#101828]",
@@ -120,7 +122,15 @@ function BodyCell({
         tone === "danger" && "text-[#f04438]"
       )}
     >
-      {children}
+      <div
+        className={cn(
+          "min-w-0 max-w-full overflow-hidden",
+          align === "center" && "mx-auto",
+          align === "right" && "ml-auto text-right"
+        )}
+      >
+        {children}
+      </div>
     </div>
   )
 }
@@ -421,7 +431,7 @@ function TableShell({
 /* -------------------------------------------------------------------------- */
 
 const CONTACTS_COLUMNS =
-  "grid grid-cols-[38px_minmax(220px,1.4fr)_minmax(160px,1fr)_120px_minmax(180px,1fr)_100px]"
+  "grid grid-cols-[38px_minmax(0,1fr)_160px_120px_minmax(0,200px)_160px]"
 
 function ContactsTable({
   fitContent,
@@ -500,7 +510,7 @@ function ContactsTable({
             )}
           >
             <div
-              className={cn(BODY_CELL, "border-r justify-center")}
+              className={cn(BODY_CELL, "justify-center")}
               onClick={(e) => e.stopPropagation()}
             >
               <Checkbox
@@ -510,31 +520,33 @@ function ContactsTable({
               />
             </div>
             <BodyCell tone="primary">
-              <div className="flex items-center gap-2">
+              <div className={cn(BODY_ROW, "gap-2")}>
                 <AvatarInitials initials={row.initials} tone={row.avatarTone} />
-                <span className={cn(BODY_TEXT, "text-[#101828]")}>
+                <span className={cn(BODY_TEXT, "text-[#101828]")} title={row.name}>
                   {row.name}
                 </span>
               </div>
             </BodyCell>
             <BodyCell tone="secondary">
-              <span className={cn(BODY_TEXT, "text-[#475467]")}>{row.phone}</span>
+              <span className={cn(BODY_TEXT, "block text-[#475467]")} title={row.phone}>
+                {row.phone}
+              </span>
             </BodyCell>
             <BodyCell>
-              <StatusPill status={row.status} />
+              <div className="min-w-0 max-w-full overflow-hidden">
+                <StatusPill status={row.status} />
+              </div>
             </BodyCell>
             <BodyCell tone="secondary">
-              <div
-                className={cn(
-                  "flex items-center gap-2 font-[family-name:var(--font-inter)] text-base font-medium leading-6 text-[#475467]"
-                )}
-              >
+              <div className={BODY_PAYMENT_ROW}>
                 <BrandChip brand={row.brand} />
-                <span>••••{row.cardLast4}</span>
+                <span className={BODY_TEXT} title={`••••${row.cardLast4}`}>
+                  ••••{row.cardLast4}
+                </span>
               </div>
             </BodyCell>
             <BodyCell tone="secondary" last>
-              <span className={cn(BODY_TEXT, "text-[#475467]")}>
+              <span className={cn(BODY_TEXT, "block text-[#475467]")} title={row.expiry}>
                 {row.expiry}
               </span>
             </BodyCell>
@@ -550,9 +562,7 @@ function ContactsTable({
 /* -------------------------------------------------------------------------- */
 
 const SUBSCRIPTIONS_COLUMNS =
-  "grid grid-cols-[38px_minmax(160px,1fr)_240px_110px_110px_130px_180px_100px]"
-
-const SUBSCRIPTIONS_TABLE_MIN_WIDTH = 1118
+  "grid grid-cols-[38px_minmax(180px,1.5fr)_minmax(220px,2fr)_160px_160px_160px_minmax(140px,1fr)_120px]"
 
 function SubscriptionsTable({
   fitContent,
@@ -593,7 +603,6 @@ function SubscriptionsTable({
   return (
     <TableShell
       columns={SUBSCRIPTIONS_COLUMNS}
-      minWidth={SUBSCRIPTIONS_TABLE_MIN_WIDTH}
       fitContent={fitContent}
       header={
         <>
@@ -629,7 +638,7 @@ function SubscriptionsTable({
             )}
           >
             <div
-              className={cn(BODY_CELL, "border-r justify-center")}
+              className={cn(BODY_CELL, "justify-center")}
               onClick={(e) => e.stopPropagation()}
             >
               <Checkbox
@@ -639,43 +648,47 @@ function SubscriptionsTable({
               />
             </div>
             <BodyCell tone="secondary">
-              <div className="flex items-center gap-1">
+              <div className={cn(BODY_ROW, "gap-1")}>
                 <AvatarInitials initials={row.initials} tone={row.avatarTone} />
-                <span className={cn(BODY_TEXT, "text-[#475467]")}>
+                <span className={cn(BODY_TEXT, "text-[#475467]")} title={row.customer}>
                   {row.customer}
                 </span>
               </div>
             </BodyCell>
             <BodyCell tone="secondary">
-              <span className={cn(BODY_TEXT, "text-[#475467]")}>
+              <span className={cn(BODY_TEXT, "block text-[#475467]")} title={row.product}>
                 {row.product}
               </span>
             </BodyCell>
             <BodyCell tone="secondary" align="right">
-              <span className={cn(BODY_TEXT, "text-[#475467]")}>
+              <span className={cn(BODY_TEXT, "block text-[#475467]")} title={row.amount}>
                 {row.amount}
               </span>
             </BodyCell>
             <BodyCell tone="secondary">
-              <span className={cn(BODY_TEXT, "text-[#475467]")}>
+              <span className={cn(BODY_TEXT, "block text-[#475467]")} title={row.interval}>
                 {row.interval}
               </span>
             </BodyCell>
             <BodyCell tone="secondary">
-              <span className={cn(BODY_TEXT, "text-[#475467]")}>
+              <span className={cn(BODY_TEXT, "block text-[#475467]")} title={row.created}>
                 {row.created}
               </span>
             </BodyCell>
             <BodyCell tone="secondary">
-              <div className="flex items-center gap-1 font-[family-name:var(--font-inter)] text-base font-medium leading-6 text-[#475467]">
+              <div className={BODY_PAYMENT_ROW}>
                 <span className="inline-flex h-6 w-8 shrink-0 items-center justify-center rounded-[2px] border border-[#eaecf0] bg-white">
                   <BrandChip brand={row.brand} />
                 </span>
-                <span>••••{row.cardLast4}</span>
+                <span className={BODY_TEXT} title={`••••${row.cardLast4}`}>
+                  ••••{row.cardLast4}
+                </span>
               </div>
             </BodyCell>
             <BodyCell last>
-              <SubscriptionStatusPill status={row.status} />
+              <div className="min-w-0 max-w-full overflow-hidden">
+                <SubscriptionStatusPill status={row.status} />
+              </div>
             </BodyCell>
           </div>
         )
@@ -689,15 +702,12 @@ function SubscriptionsTable({
 /* -------------------------------------------------------------------------- */
 
 const NOT_ELIGIBLE_COLUMNS =
-  "grid grid-cols-[240px_minmax(240px,1fr)_110px_180px_minmax(180px,1fr)]"
-
-const NOT_ELIGIBLE_TABLE_MIN_WIDTH = 1096
+  "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_160px_196px_minmax(0,1fr)]"
 
 function NotEligibleTable({ fitContent }: { fitContent: boolean }) {
   return (
     <TableShell
       columns={NOT_ELIGIBLE_COLUMNS}
-      minWidth={NOT_ELIGIBLE_TABLE_MIN_WIDTH}
       fitContent={fitContent}
       header={
         <>
@@ -716,29 +726,37 @@ function NotEligibleTable({ fitContent }: { fitContent: boolean }) {
           className={cn(NOT_ELIGIBLE_COLUMNS, "bg-white")}
         >
           <BodyCell tone="secondary">
-            <div className="flex items-center gap-1">
+            <div className={cn(BODY_ROW, "gap-1")}>
               <AvatarInitials initials={row.initials} tone={row.avatarTone} />
-              <span className={cn(BODY_TEXT, "text-[#475467]")}>
+              <span className={cn(BODY_TEXT, "text-[#475467]")} title={row.customer}>
                 {row.customer}
               </span>
             </div>
           </BodyCell>
           <BodyCell tone="secondary">
-            <span className={cn(BODY_TEXT, "text-[#475467]")}>{row.product}</span>
+            <span className={cn(BODY_TEXT, "block text-[#475467]")} title={row.product}>
+              {row.product}
+            </span>
           </BodyCell>
           <BodyCell tone="secondary" align="right">
-            <span className={cn(BODY_TEXT, "text-[#475467]")}>{row.amount}</span>
+            <span className={cn(BODY_TEXT, "block text-[#475467]")} title={row.amount}>
+              {row.amount}
+            </span>
           </BodyCell>
           <BodyCell tone="secondary">
-            <div className="flex items-center gap-1 font-[family-name:var(--font-inter)] text-base font-medium leading-6 text-[#475467]">
+            <div className={BODY_PAYMENT_ROW}>
               <span className="inline-flex h-6 w-8 shrink-0 items-center justify-center rounded-[2px] border border-[#eaecf0] bg-white">
                 <BrandChip brand={row.brand} />
               </span>
-              <span>••••{row.cardLast4}</span>
+              <span className={BODY_TEXT} title={`••••${row.cardLast4}`}>
+                ••••{row.cardLast4}
+              </span>
             </div>
           </BodyCell>
           <BodyCell last>
-            <NotEligibleReasonPill reason={row.reason} />
+            <div className="min-w-0 max-w-full overflow-hidden">
+              <NotEligibleReasonPill reason={row.reason} />
+            </div>
           </BodyCell>
         </div>
       ))}

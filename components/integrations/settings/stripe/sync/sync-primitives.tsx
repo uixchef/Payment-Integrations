@@ -443,7 +443,10 @@ export function SubscriptionStatusPill({
 /** Not-eligible reason badge — Figma warning pill. */
 export function NotEligibleReasonPill({ reason }: { reason: NotEligibleReason }) {
   return (
-    <span className="inline-flex h-6 items-center rounded-[12px] bg-[#fffaeb] px-2 font-[family-name:var(--font-inter)] text-sm font-medium leading-5 text-[#b54708]">
+    <span
+      className="inline-flex h-6 max-w-full items-center truncate rounded-[12px] bg-[#fffaeb] px-2 font-[family-name:var(--font-inter)] text-sm font-medium leading-5 text-[#b54708]"
+      title={reason}
+    >
       {reason}
     </span>
   )

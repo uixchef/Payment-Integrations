@@ -42,6 +42,7 @@ export function IntegrationCard({ item }: { item: IntegrationItem }) {
         <IntegrationProviderIdentity
           item={item}
           isDefault={defaultProvider}
+          alignBadgesEnd
           nameClassName="min-w-0 flex-1 truncate text-base font-semibold leading-6 text-[#101828]"
         />
       </div>

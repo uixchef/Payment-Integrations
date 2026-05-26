@@ -126,7 +126,7 @@ function CountriesTableRow({
         "group transition-colors hover:bg-[#f5f8ff]"
       )}
     >
-      <div className="flex h-9 items-center border-b border-r border-[#d0d5dd] px-3">
+      <div className="flex h-9 items-center border-b border-[#d0d5dd] px-3">
         <p className="truncate font-[family-name:var(--font-inter)] text-base font-medium leading-6 text-[#475467]">
           {continent}
         </p>

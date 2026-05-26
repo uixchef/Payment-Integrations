@@ -17,6 +17,7 @@ export function IntegrationProviderIdentity({
   item: IntegrationItem
   nameClassName?: string
   isDefault?: boolean
+  /** Table: badges sit inline with the name. Cards/grid: badges align to the far edge. */
   alignBadgesEnd?: boolean
 }) {
   const logoSrc =
@@ -25,7 +26,7 @@ export function IntegrationProviderIdentity({
 
   const defaultBadge = isDefault ? (
     <span
-      className="inline-flex h-6 shrink-0 items-center rounded-xl bg-[#eff4ff] px-2 font-[family-name:var(--font-inter)] text-sm font-medium leading-5 text-[#004eeb]"
+      className="inline-flex w-fit shrink-0 items-center whitespace-nowrap rounded-xl bg-[#eff4ff] px-2 py-0.5 font-[family-name:var(--font-inter)] text-sm font-medium leading-5 text-[#004eeb]"
       aria-label="Default payment provider"
     >
       Default
@@ -38,7 +39,7 @@ export function IntegrationProviderIdentity({
         <button
           type="button"
           aria-label="Built by LeadConnector"
-          className="flex h-6 shrink-0 cursor-default items-center rounded-full bg-[#f0f9ff] px-2 outline-none focus-visible:ring-2 focus-visible:ring-[#84adff]"
+          className="inline-flex w-fit shrink-0 cursor-default items-center rounded-full bg-[#f0f9ff] px-2 py-0.5 outline-none focus-visible:ring-2 focus-visible:ring-[#84adff]"
         >
           <Image
             src={INTEGRATION_ASSETS.icons.verified}
@@ -103,7 +104,7 @@ export function IntegrationProviderIdentity({
           {badges}
         </div>
       ) : (
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <span className={nameClassName}>{item.name}</span>
           {badges}
         </div>

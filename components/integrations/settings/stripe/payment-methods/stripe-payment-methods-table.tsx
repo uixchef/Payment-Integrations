@@ -203,18 +203,18 @@ function PaymentMethodRow({
 
   return (
     <div className="grid grid-cols-[minmax(220px,1.15fr)_minmax(180px,0.85fr)_minmax(280px,1.5fr)_140px]">
-      <div className={cn(BODY_CELL, "gap-1 border-r", rowTone)}>
+      <div className={cn(BODY_CELL, "gap-1", rowTone)}>
         <PaymentMethodIcon src={row.icon} name={row.name} />
         <span className="truncate font-[family-name:var(--font-inter)] text-base font-medium leading-6 text-[#475467]">
           {row.name}
         </span>
       </div>
-      <div className={cn(BODY_CELL, "border-r", rowTone)}>
+      <div className={cn(BODY_CELL, rowTone)}>
         <span className="truncate font-[family-name:var(--font-inter)] text-base font-medium leading-6 text-[#475467]">
           {row.type}
         </span>
       </div>
-      <div className={cn(BODY_CELL, "min-w-0 border-r", rowTone)}>
+      <div className={cn(BODY_CELL, "min-w-0", rowTone)}>
         <PopularInCell
           popularIn={row.popularIn}
           onViewAllCountries={
