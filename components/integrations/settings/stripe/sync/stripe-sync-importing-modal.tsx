@@ -137,7 +137,7 @@ export function StripeSyncImportingModal({
                   Syncing from Stripe...
                 </p>
                 <p className="font-[family-name:var(--font-inter)] text-sm font-normal leading-5 text-[#475467]">
-                  This may take a moment. You can leave this page and come back.
+                  This may take a moment. You can close this page and come back.
                 </p>
               </div>
 

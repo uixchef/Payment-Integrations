@@ -15,7 +15,7 @@ export function ModeSwitcher({
     <div
       role="tablist"
       aria-label="Environment"
-      className="inline-flex h-9 shrink-0 overflow-hidden rounded border border-[#d0d5dd] bg-white shadow-[0_1px_1px_rgba(16,24,40,0.05)]"
+      className="inline-flex h-9 shrink-0 gap-2 overflow-hidden rounded bg-[#f9fafb] p-1 shadow-[0_1px_2px_rgba(16,24,40,0.05)]"
     >
       {(["live", "test"] as const).map((mode) => {
         const active = value === mode
@@ -27,11 +27,11 @@ export function ModeSwitcher({
             aria-selected={active}
             onClick={() => onChange(mode)}
             className={cn(
-              "inline-flex h-full items-center justify-center px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 capitalize outline-none transition-colors",
+              "inline-flex h-full min-w-[48px] items-center justify-center rounded px-2 font-[family-name:var(--font-inter)] text-base leading-6 capitalize outline-none transition-colors",
               "focus-visible:ring-2 focus-visible:ring-[#84adff]",
               active
-                ? "bg-[#eff4ff] text-[#004eeb]"
-                : "bg-white text-[#344054] hover:bg-[#f9fafb]"
+                ? "bg-white font-semibold text-[#004eeb] shadow-[0_1px_3px_rgba(16,24,40,0.1),0_1px_2px_rgba(16,24,40,0.06)]"
+                : "bg-transparent font-medium text-[#475467] hover:text-[#344054]"
             )}
           >
             {mode}
@@ -65,9 +65,9 @@ const STATUS_TAG_STYLES: Record<
 export function getIntegrationStatusTagVariant(
   isConnected: boolean,
   isDefault: boolean
-): IntegrationStatusTagVariant {
+): IntegrationStatusTagVariant | null {
   if (!isConnected) return "not-connected"
-  if (isDefault) return "default"
+  if (isDefault) return null
   return "enabled"
 }
 
@@ -79,6 +79,8 @@ export function ConnectionStatusTag({
   isDefault?: boolean
 }) {
   const variant = getIntegrationStatusTagVariant(isConnected, isDefault)
+  if (!variant) return null
+
   const { label, className } = STATUS_TAG_STYLES[variant]
 
   return (

@@ -30,7 +30,6 @@ export function StepScanConfigure({
         <ToggleCard
           iconKey="import-subscriptions"
           title="Import subscriptions"
-          description="Active subscriptions with status, billing date and product."
           checked={config.importSubscriptions}
           onCheckedChange={(next) =>
             onChange({ ...config, importSubscriptions: next })
@@ -39,7 +38,6 @@ export function StepScanConfigure({
         <ToggleCard
           iconKey="contact-payment-method-sync"
           title="Contact & payment method sync"
-          description="Match Stripe customers to HighLevel contacts and import saved card references."
           checked={config.contactPaymentMethodSync}
           onCheckedChange={(next) =>
             onChange({ ...config, contactPaymentMethodSync: next })

@@ -6,23 +6,19 @@ import { Separator } from "@/components/ui/separator"
 import { IntegrationAvailability } from "@/components/integrations/integration-availability"
 import { IntegrationProviderIdentity } from "@/components/integrations/integration-provider-identity"
 import { useIntegrationStatus } from "@/lib/integration-status-context"
+import {
+  getIntegrationCtaHref,
+  providerHasSettings,
+} from "@/lib/integration-cta-routes"
 import type { IntegrationItem } from "@/lib/integrations-data"
 import { cn } from "@/lib/utils"
-
-const PROVIDERS_WITH_SETTINGS = new Set([
-  "razorpay",
-  "authorize-net",
-  "mercado-pago",
-  "manual",
-  "stripe",
-  "paypal",
-])
 
 export function IntegrationCard({ item }: { item: IntegrationItem }) {
   const { isConnected, isDefault } = useIntegrationStatus()
   const connected = isConnected(item.id)
   const defaultProvider = isDefault(item.id)
-  const hasSettings = PROVIDERS_WITH_SETTINGS.has(item.id)
+  const hasSettings = providerHasSettings(item.id)
+  const ctaHref = getIntegrationCtaHref(item.id, connected)
   const ctaLabel = connected ? "Manage" : "Connect"
 
   const ctaClassName = cn(
@@ -57,9 +53,9 @@ export function IntegrationCard({ item }: { item: IntegrationItem }) {
           <IntegrationAvailability item={item} />
         </div>
 
-        {hasSettings ? (
+        {hasSettings && ctaHref ? (
           <Button asChild variant="outline" className={ctaClassName}>
-            <Link href={`/integrations/${item.id}`}>{ctaLabel}</Link>
+            <Link href={ctaHref}>{ctaLabel}</Link>
           </Button>
         ) : (
           <Button type="button" variant="outline" className={ctaClassName}>

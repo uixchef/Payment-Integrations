@@ -154,10 +154,6 @@ export function StripeSyncShell({ item }: { item: IntegrationItem }) {
   }
 
   const handlePrevious = () => {
-    if (currentStep === 3) {
-      setLeaveConfirmOpen(true)
-      return
-    }
     goToPreviousStep()
   }
 
@@ -237,9 +233,6 @@ export function StripeSyncShell({ item }: { item: IntegrationItem }) {
           {isResultsView ? (
             <ResultsFooter
               onResync={handleResync}
-              onGoToSubscriptions={() => {
-                /* mock: navigate to subscriptions */
-              }}
               onDone={() => router.push("/integrations/stripe")}
             />
           ) : (

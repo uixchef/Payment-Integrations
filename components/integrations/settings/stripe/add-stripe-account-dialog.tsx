@@ -44,6 +44,8 @@ export function AddStripeAccountDialog({
       ? "Edit Stripe account display name"
       : "Add new Stripe account"
 
+  const submitLabel = mode === "edit" ? "Done" : "Add account"
+
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange} modal>
       <DialogPrimitive.Portal>
@@ -96,7 +98,7 @@ export function AddStripeAccountDialog({
                   <button
                     type="button"
                     aria-label="What is the account name used for?"
-                    className="flex size-3 shrink-0 cursor-help items-center justify-center text-[#98a2b3] outline-none transition-colors hover:text-[#475467] focus-visible:text-[#475467]"
+                    className="flex size-3 shrink-0 cursor-help items-center justify-center text-[#101828] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#84adff]"
                   >
                     <Info className="size-3" strokeWidth={1.75} aria-hidden />
                   </button>
@@ -146,7 +148,7 @@ export function AddStripeAccountDialog({
                     : "cursor-not-allowed bg-[#b2ccff]"
                 )}
               >
-                Done
+                {submitLabel}
               </button>
             </div>
           </div>

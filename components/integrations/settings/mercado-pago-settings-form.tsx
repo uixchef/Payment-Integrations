@@ -4,6 +4,10 @@ import { useState } from "react"
 import Image from "next/image"
 import { Check, ChevronDown, Eye, EyeOff } from "lucide-react"
 import {
+  SettingsCard,
+  SettingsCardDivider,
+} from "@/components/integrations/settings/account-settings-card"
+import {
   ConnectionStatusTag,
   ModeSwitcher,
   SettingsFormLabel,
@@ -217,14 +221,14 @@ function PasswordInput({
 
 export type MercadoPagoFormProps = {
   isConnected: boolean
-  isDefault?: boolean
+  isDefault: boolean
   state: MercadoPagoFormState
   onStateChange: (next: MercadoPagoFormState) => void
 }
 
 export function MercadoPagoSettingsForm({
   isConnected,
-  isDefault = false,
+  isDefault,
   state,
   onStateChange,
 }: MercadoPagoFormProps) {
@@ -236,12 +240,9 @@ export function MercadoPagoSettingsForm({
   }
 
   return (
-    <form
-      className="flex w-full max-w-[656px] flex-col"
-      onSubmit={(event) => event.preventDefault()}
-    >
-      <div className="flex items-center gap-6">
-        <div className="flex min-w-0 flex-1 items-center gap-1">
+    <SettingsCard className="max-w-[756px]">
+      <div className="flex items-center gap-4">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <h2 className="font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-[#101828]">
             Mercado Pago configuration
           </h2>
@@ -250,7 +251,9 @@ export function MercadoPagoSettingsForm({
         <ModeSwitcher value={mode} onChange={(next) => update({ mode: next })} />
       </div>
 
-      <div className="flex flex-col gap-4 pt-6">
+      <SettingsCardDivider />
+
+      <div className="flex w-full flex-col gap-4">
         <div className="flex flex-col gap-1">
           <SettingsFormLabel htmlFor="mercado-pago-public-key" required>
             Public key
@@ -301,6 +304,6 @@ export function MercadoPagoSettingsForm({
           />
         </div>
       </div>
-    </form>
+    </SettingsCard>
   )
 }

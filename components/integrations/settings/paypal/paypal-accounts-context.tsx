@@ -5,19 +5,38 @@ import * as React from "react"
 import type { PayPalAccount } from "@/components/integrations/settings/paypal/paypal-account-config"
 import { MAX_ACCOUNTS_PER_PROVIDER } from "@/lib/integration-account-limits"
 
+const OAUTH_FIELDS: Pick<
+  PayPalAccount,
+  "name" | "email" | "totalBalance" | "mode"
+> = {
+  name: "Sarthak Goyal",
+  email: "sarthak.goyal@gmail.com",
+  totalBalance: "$200.00",
+  mode: "live",
+}
+
 function generateMerchantId(): string {
   const suffix = Math.random().toString(36).slice(2, 14).padEnd(12, "x")
   return `acct_${suffix}`
 }
 
-function newPendingAccount(label: string, index: number): PayPalAccount {
+function newPendingAccount(
+  label: string,
+  index: number,
+  oauthFlow = false
+): PayPalAccount {
   return {
     id: `account-${index}`,
     label,
     connected: false,
+    oauthConnected: false,
+    oauthFlow,
     clientId: "",
     secretId: "",
     merchantId: "",
+    name: "",
+    email: "",
+    totalBalance: "",
     mode: "live",
   }
 }
@@ -36,6 +55,8 @@ type PayPalAccountsContextValue = {
   renameActiveAccount: (label: string) => void
   updateActiveAccount: (patch: Partial<PayPalAccount>) => void
   connectActiveAccount: () => boolean
+  completeActiveAccountOAuth: () => boolean
+  reconnectActiveAccount: () => boolean
   removeActiveAccount: () => {
     remainingCount: number
     nextActiveAccountId: string | null
@@ -88,7 +109,10 @@ export function PayPalAccountsProvider({
       if (accounts.length >= MAX_ACCOUNTS_PER_PROVIDER) {
         return activeAccount ?? accounts[0]
       }
-      const account = newPendingAccount(label, accounts.length + 1)
+      const useOAuthFlow = accounts.some(
+        (account) => account.connected && account.oauthConnected
+      )
+      const account = newPendingAccount(label, accounts.length + 1, useOAuthFlow)
       setAccounts((current) => [...current, account])
       setActiveAccountId(account.id)
       return account
@@ -136,7 +160,60 @@ export function PayPalAccountsProvider({
     setAccounts((current) =>
       current.map((account) =>
         account.id === activeAccount.id
-          ? { ...account, merchantId, connected: true }
+          ? {
+              ...account,
+              merchantId,
+              connected: true,
+              oauthConnected: false,
+            }
+          : account
+      )
+    )
+    return true
+  }, [activeAccount])
+
+  const completeActiveAccountOAuth = React.useCallback<
+    PayPalAccountsContextValue["completeActiveAccountOAuth"]
+  >(() => {
+    if (!activeAccount || activeAccount.connected) return false
+
+    const merchantId = generateMerchantId()
+    setAccounts((current) =>
+      current.map((account) =>
+        account.id === activeAccount.id
+          ? {
+              ...account,
+              ...OAUTH_FIELDS,
+              merchantId,
+              connected: true,
+              oauthConnected: true,
+            }
+          : account
+      )
+    )
+    return true
+  }, [activeAccount])
+
+  const reconnectActiveAccount = React.useCallback<
+    PayPalAccountsContextValue["reconnectActiveAccount"]
+  >(() => {
+    if (!activeAccount?.connected || activeAccount.oauthConnected) return false
+
+    setAccounts((current) =>
+      current.map((account) =>
+        account.id === activeAccount.id
+          ? {
+              ...account,
+              connected: false,
+              oauthConnected: false,
+              oauthFlow: true,
+              clientId: "",
+              secretId: "",
+              merchantId: "",
+              name: "",
+              email: "",
+              totalBalance: "",
+            }
           : account
       )
     )
@@ -181,6 +258,8 @@ export function PayPalAccountsProvider({
       renameActiveAccount,
       updateActiveAccount,
       connectActiveAccount,
+      completeActiveAccountOAuth,
+      reconnectActiveAccount,
       removeActiveAccount,
     }),
     [
@@ -193,6 +272,8 @@ export function PayPalAccountsProvider({
       renameActiveAccount,
       updateActiveAccount,
       connectActiveAccount,
+      completeActiveAccountOAuth,
+      reconnectActiveAccount,
       removeActiveAccount,
     ]
   )

@@ -209,7 +209,7 @@ function StripeSyncInProgressCard({
       />
 
       <SyncProgressRow
-        label="Customers"
+        label="Contacts"
         progressPercent={progress.customers.progressPercent}
         status={
           <>
@@ -274,7 +274,7 @@ function StripeSyncCompletedCard({
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
           <h2 className="font-[family-name:var(--font-inter)] text-base font-medium leading-6 text-[#101828]">
-            Stripe data syncing in progress
+            Stripe data syncing completed
           </h2>
           <p className="font-[family-name:var(--font-inter)] text-sm leading-5 text-[#475467]">
             {lastSyncLabel}
@@ -290,7 +290,7 @@ function StripeSyncCompletedCard({
           showDivider
         />
         <SyncSummaryRow
-          label="Customers"
+          label="Contacts"
           count={completed.customers.total}
           tag={<SyncStatusTag variant="success">All matched</SyncStatusTag>}
           showDivider

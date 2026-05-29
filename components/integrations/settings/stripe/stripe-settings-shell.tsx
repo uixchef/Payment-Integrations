@@ -8,10 +8,7 @@ import {
   ArrowLeft,
   LogOut,
   MoreHorizontal,
-  Pencil,
-  Settings2,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import {
   DropdownMenu,
@@ -19,10 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Separator } from "@/components/ui/separator"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { AddAccountButton } from "@/components/integrations/settings/add-account-button"
-import { SetAsDefaultButton } from "@/components/integrations/settings/set-as-default-button"
 import { AddStripeAccountDialog } from "@/components/integrations/settings/stripe/add-stripe-account-dialog"
 import {
   StripeAccountConfig,
@@ -37,6 +31,8 @@ import { STRIPE_SYNC_COUNTS } from "@/components/integrations/settings/stripe/sy
 import { INTEGRATION_ASSETS } from "@/lib/integration-assets"
 import { getAddAccountButtonState } from "@/lib/integration-account-limits"
 import {
+  DEFAULT_ACCOUNT_DISCONNECT_TOOLTIP,
+  DISCONNECT_ACCOUNT_DESCRIPTION,
   getSetAsDefaultDisabledReason,
   getSetAsDefaultTooltip,
 } from "@/lib/set-as-default-tooltip"
@@ -63,8 +59,6 @@ function splitVisibility(
     return { visible, overflow }
   }
 
-  // Hoist the active account out of overflow into the last visible slot,
-  // demoting the displaced visible tab into overflow's leading position.
   const activeAccount = overflow[activeIdxInOverflow]
   const displaced = visible[visible.length - 1]
   const nextVisible = [...visible.slice(0, -1), activeAccount]
@@ -84,6 +78,7 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
     getDefaultProviderName,
     setConnected,
     setDefaultProvider,
+    clearDefaultProvider,
   } = useIntegrationStatus()
 
   const isConnected = isConnectedFromStatus(item.id)
@@ -119,6 +114,23 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
   const syncState = getAccountSyncState(activeAccountId)
   const stripeLogo = item.logo ?? INTEGRATION_ASSETS.logos.stripe
 
+  const activeIsDefaultAccount =
+    isDefault && activeAccountId !== null && activeAccountId === defaultAccountId
+
+  const setAsDefaultState = getSetAsDefaultDisabledReason({
+    multiAccount: true,
+    isConnected,
+    isDefault,
+    activeAccountConnected: Boolean(activeAccount?.connected),
+    activeIsDefaultAccount,
+  })
+  const setAsDefaultTooltip = getSetAsDefaultTooltip({
+    providerName: item.name,
+    multiAccount: true,
+    disabled: setAsDefaultState.disabled,
+    reason: setAsDefaultState.reason,
+  })
+
   const handleConnect = () => {
     if (accounts.length === 0) {
       ensureSeededOnConnect()
@@ -145,11 +157,19 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
     }
   }
 
-  const handleSetAsDefault = () => {
+  const handleSetAsDefaultChange = (checked: boolean) => {
     if (!activeAccount?.connected) return
-    if (isDefault && activeAccountId === defaultAccountId) return
 
-    // Need cross-provider confirmation only if we're changing the integration default.
+    if (!checked) {
+      if (activeAccountId === defaultAccountId) {
+        setDefaultAccountId(null)
+      }
+      if (isDefault) {
+        clearDefaultProvider()
+      }
+      return
+    }
+
     if (!isDefault && otherDefaultProviderId) {
       setShowSwitchDefaultModal(true)
       return
@@ -175,30 +195,35 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
         defaultAccountId={defaultAccountId}
         isConnected={isConnected}
         isDefault={isDefault}
-        activeAccountConnected={Boolean(activeAccount?.connected)}
         onSelectAccount={setActiveAccountId}
         onAddAccount={() => setAccountDialogMode("add")}
-        onSetAsDefault={handleSetAsDefault}
-        onOpenPaymentMethods={() =>
-          router.push("/integrations/stripe/payment-methods")
-        }
       />
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[12px] bg-white shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)]">
           <div className="flex min-h-0 flex-1 overflow-y-auto p-6">
-            <div className="mx-auto flex w-full max-w-[1080px] gap-10">
-              <div className="flex w-full max-w-[656px] min-w-0 flex-1 justify-start">
+            <div className="mx-auto flex w-full max-w-[1180px] gap-10">
+              <div className="flex w-full max-w-[756px] min-w-0 flex-1 justify-start">
                 {activeAccount?.connected ? (
                   <StripeAccountConfig
                     account={activeAccount}
-                    isDefaultAccount={
-                      isDefault && activeAccount.id === defaultAccountId
-                    }
+                    isDefaultAccount={activeIsDefaultAccount}
+                    setAsDefaultChecked={activeIsDefaultAccount}
+                    setAsDefaultDisabled={setAsDefaultState.disabled}
+                    setAsDefaultTooltip={setAsDefaultTooltip}
+                    disconnectDisabled={activeIsDefaultAccount}
+                    disconnectTooltip={DEFAULT_ACCOUNT_DISCONNECT_TOOLTIP}
+                    disconnectDescription={DISCONNECT_ACCOUNT_DESCRIPTION}
                     onModeChange={(mode) => updateActiveAccount({ mode })}
                     onApplePayChange={(applePayEnabled) =>
                       updateActiveAccount({ applePayEnabled })
                     }
+                    onSetAsDefaultChange={handleSetAsDefaultChange}
+                    onOpenPaymentMethods={() =>
+                      router.push("/integrations/stripe/payment-methods")
+                    }
+                    onEditAccount={() => setAccountDialogMode("edit")}
+                    onDisconnect={() => setShowDisconnectModal(true)}
                   />
                 ) : (
                   <StripeEmptyState
@@ -214,7 +239,7 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
                 )}
               </div>
 
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-6">
                 <StripeSyncCard
                   enabled={Boolean(activeAccount?.connected)}
                   syncState={syncState}
@@ -239,17 +264,6 @@ export function StripeSettingsShell({ item }: { item: IntegrationItem }) {
               </div>
             </div>
           </div>
-
-          {activeAccount?.connected ? (
-            <ConnectedFooter
-              providerName={item.name}
-              isDefaultAccount={
-                isDefault && activeAccount.id === defaultAccountId
-              }
-              onEditAccount={() => setAccountDialogMode("edit")}
-              onDisconnect={() => setShowDisconnectModal(true)}
-            />
-          ) : null}
         </div>
       </div>
 
@@ -346,11 +360,8 @@ function SubHeader({
   defaultAccountId,
   isConnected,
   isDefault,
-  activeAccountConnected,
   onSelectAccount,
   onAddAccount,
-  onSetAsDefault,
-  onOpenPaymentMethods,
 }: {
   item: IntegrationItem
   accounts: StripeAccount[]
@@ -358,27 +369,9 @@ function SubHeader({
   defaultAccountId: string | null
   isConnected: boolean
   isDefault: boolean
-  activeAccountConnected: boolean
   onSelectAccount: (id: string) => void
   onAddAccount: () => void
-  onSetAsDefault: () => void
-  onOpenPaymentMethods: () => void
 }) {
-  const activeIsDefaultAccount =
-    isDefault && activeAccountId !== null && activeAccountId === defaultAccountId
-  const setAsDefaultState = getSetAsDefaultDisabledReason({
-    multiAccount: true,
-    isConnected,
-    isDefault,
-    activeAccountConnected,
-    activeIsDefaultAccount,
-  })
-  const setAsDefaultTooltip = getSetAsDefaultTooltip({
-    providerName: item.name,
-    multiAccount: true,
-    disabled: setAsDefaultState.disabled,
-    reason: setAsDefaultState.reason,
-  })
   const addAccountState = getAddAccountButtonState({
     accountsCount: accounts.length,
     hasConnectedAccount: accounts.some((account) => account.connected),
@@ -463,29 +456,6 @@ function SubHeader({
             disabledReason={addAccountState.disabledReason}
             onAddAccount={onAddAccount}
           />
-
-          <div className="ml-auto" />
-
-          <div className="flex shrink-0 items-center gap-2">
-            <SetAsDefaultButton
-              disabled={setAsDefaultState.disabled}
-              tooltip={setAsDefaultTooltip}
-              onClick={onSetAsDefault}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onOpenPaymentMethods}
-              className={cn(
-                "h-9 gap-2 rounded px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 shadow-none",
-                "border-[#84adff] bg-white text-[#004eeb] shadow-[0_1px_2px_rgba(16,24,40,0.05)]",
-                "hover:border-[#84adff] hover:bg-[#f5f8ff] hover:text-[#004eeb]"
-              )}
-            >
-              <Settings2 className="size-4" strokeWidth={1.75} aria-hidden />
-              Payment methods
-            </Button>
-          </div>
         </div>
       ) : (
         <div className="flex-1" />
@@ -494,11 +464,6 @@ function SubHeader({
   )
 }
 
-/**
- * The Default tag rendered inline with each account tab (and in the overflow
- * menu). The `Enabled` state is intentionally NOT shown here — it lives only
- * beside the body header, via ConnectionStatusTag in StripeAccountConfig.
- */
 function DefaultBadge({ active }: { active: boolean }) {
   return (
     <span
@@ -568,68 +533,5 @@ function VerticalDivider() {
       aria-hidden
       className="block h-6 w-px shrink-0 self-center bg-[#eaecf0]"
     />
-  )
-}
-
-function ConnectedFooter({
-  isDefaultAccount,
-  onEditAccount,
-  onDisconnect,
-}: {
-  providerName: string
-  isDefaultAccount: boolean
-  onEditAccount: () => void
-  onDisconnect: () => void
-}) {
-  // Avoid the native `disabled` attribute so the Tooltip can still fire on
-  // hover/focus; aria-disabled + onClick guard handle the semantics instead.
-  const disconnectButton = (
-    <Button
-      type="button"
-      variant="outline"
-      aria-disabled={isDefaultAccount}
-      onClick={isDefaultAccount ? undefined : onDisconnect}
-      className={cn(
-        "h-9 rounded px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6",
-        "shadow-[0_1px_2px_rgba(16,24,40,0.05)]",
-        isDefaultAccount
-          ? "cursor-not-allowed border-[#fecdca] bg-white text-[#fda29b] hover:border-[#fecdca] hover:bg-white hover:text-[#fda29b]"
-          : "border-[#fda29b] bg-white text-[#b42318] hover:border-[#f97066] hover:bg-[#fef3f2] hover:text-[#b42318]"
-      )}
-    >
-      Disconnect
-    </Button>
-  )
-
-  return (
-    <footer className="flex flex-col gap-3 pt-0">
-      <Separator className="bg-[#eaecf0]" />
-      <div className="flex items-center justify-between px-6 pb-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onEditAccount}
-          className={cn(
-            "h-9 gap-2 rounded px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 shadow-none",
-            "border-[#d0d5dd] bg-white text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.05)]",
-            "hover:bg-[#f9fafb]"
-          )}
-        >
-          <Pencil className="size-4" strokeWidth={1.75} aria-hidden />
-          Edit account
-        </Button>
-        {isDefaultAccount ? (
-          <Tooltip>
-            <TooltipTrigger asChild>{disconnectButton}</TooltipTrigger>
-            <TooltipContent side="top" sideOffset={6} className="max-w-[280px]">
-              The provider is set as the default payment option. To disconnect,
-              please select another provider as the default first.
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          disconnectButton
-        )}
-      </div>
-    </footer>
   )
 }

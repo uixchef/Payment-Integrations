@@ -7,7 +7,7 @@ import { AlertTriangle, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-export type ConfirmationDialogVariant = "warning" | "destructive"
+export type ConfirmationDialogVariant = "warning" | "destructive" | "primary"
 
 const VARIANT_STYLES: Record<
   ConfirmationDialogVariant,
@@ -22,6 +22,11 @@ const VARIANT_STYLES: Record<
     iconColor: "text-[#d92d20]",
     confirmBg: "bg-[#d92d20] border-[#d92d20]",
     confirmHover: "hover:bg-[#b42318] hover:border-[#b42318]",
+  },
+  primary: {
+    iconColor: "text-[#101828]",
+    confirmBg: "bg-[#155eef] border-[#155eef]",
+    confirmHover: "hover:bg-[#004eeb] hover:border-[#004eeb]",
   },
 }
 

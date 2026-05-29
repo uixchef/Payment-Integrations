@@ -20,13 +20,17 @@ export type CardBrand =
   | "alipay"
   | "klarna"
 
+export type SavedPaymentMethod = {
+  brand: CardBrand
+  last4: string
+}
+
 export type ContactRow = {
   id: string
   name: string
   phone: string
   status: "matched" | "new"
-  brand: CardBrand
-  cardLast4: string
+  paymentMethods: SavedPaymentMethod[]
   expiry: string
   initials: string
   avatarTone: AvatarTone
@@ -41,8 +45,7 @@ export type SubscriptionRow = {
   amount: string
   interval: "Monthly" | "Yearly"
   created: string
-  brand: CardBrand
-  cardLast4: string
+  paymentMethods: SavedPaymentMethod[]
   status: "active"
 }
 
@@ -143,18 +146,42 @@ const CONTACT_SEEDS: Array<{
   { name: "Craig Ekstrom Bothman", status: "new", brand: "applepay", cardLast4: "1357", expiry: "03/29" },
 ]
 
+function buildPaymentMethods(
+  index: number,
+  primaryBrand: CardBrand,
+  primaryLast4: string
+): SavedPaymentMethod[] {
+  const methods: SavedPaymentMethod[] = [
+    { brand: primaryBrand, last4: primaryLast4 },
+  ]
+
+  const extraCount =
+    index % 4 === 0 ? 3 : index % 7 === 0 ? 1 : index % 11 === 0 ? 2 : 0
+
+  for (let i = 0; i < extraCount; i++) {
+    methods.push({
+      brand: BRANDS[(index + i + 1) % BRANDS.length],
+      last4: String(2000 + ((index * 73 + i * 11) % 9000)).slice(-4),
+    })
+  }
+
+  return methods
+}
+
 function buildContacts(count: number): ContactRow[] {
   return Array.from({ length: count }, (_, index) => {
     const seed = CONTACT_SEEDS[index % CONTACT_SEEDS.length]
     const suffix = index >= CONTACT_SEEDS.length ? ` ${Math.floor(index / CONTACT_SEEDS.length) + 1}` : ""
     const name = `${seed.name}${suffix}`
+    const primaryBrand = BRANDS[index % BRANDS.length]
+    const primaryLast4 = String(1000 + ((index * 137) % 9000)).slice(-4)
+
     return {
       id: `contact-${index + 1}`,
       name,
       phone: `+1 415 ${String(100 + (index % 900)).padStart(3, "0")} ${String(index + 1).padStart(4, "0")}`,
       status: seed.status,
-      brand: BRANDS[index % BRANDS.length],
-      cardLast4: String(1000 + ((index * 137) % 9000)).slice(-4),
+      paymentMethods: buildPaymentMethods(index, primaryBrand, primaryLast4),
       expiry: seed.expiry,
       initials: initialsOf(name),
       avatarTone: toneFor(index),
@@ -201,6 +228,9 @@ function buildSubscriptions(count: number): SubscriptionRow[] {
     const suffix = index >= CONTACT_SEEDS.length ? ` ${Math.floor(index / CONTACT_SEEDS.length) + 1}` : ""
     const customer = `${contactSeed.name}${suffix}`
     const amount = productEntry.base + (Math.floor(index / SUBSCRIPTION_PRODUCTS.length) * 50)
+    const primaryBrand = BRANDS[index % BRANDS.length]
+    const primaryLast4 = String(1000 + ((index * 137) % 9000)).slice(-4)
+
     return {
       id: `sub-${index + 1}`,
       customer,
@@ -210,8 +240,7 @@ function buildSubscriptions(count: number): SubscriptionRow[] {
       amount: `$${amount}`,
       interval: productEntry.interval,
       created: formatDate(addDays(BASE_DATE, index % 365)),
-      brand: BRANDS[index % BRANDS.length],
-      cardLast4: String(1000 + ((index * 137) % 9000)).slice(-4),
+      paymentMethods: buildPaymentMethods(index, primaryBrand, primaryLast4),
       status: "active" as const,
     }
   })

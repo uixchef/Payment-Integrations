@@ -1,7 +1,6 @@
 "use client"
 
 import {
-  ArrowRight,
   Check,
   CheckCircle2,
   Info,
@@ -163,7 +162,7 @@ const CHECKLIST_ITEMS = [
   },
   {
     id: "contacts",
-    done: false,
+    done: true,
     label:
       "Verify contacts from the contacts page on the left nav bar and check if saved payment methods are showing up.",
   },
@@ -218,7 +217,7 @@ export function StepSyncResults({
           }}
         />
         <ResultStatCard
-          title="Customers"
+          title="Contacts"
           rows={{
             synced: results.customers.synced,
             pending: results.customers.pending,
@@ -277,17 +276,15 @@ export function StepSyncResults({
 
 export function ResultsFooter({
   onResync,
-  onGoToSubscriptions,
   onDone,
 }: {
   onResync: () => void
-  onGoToSubscriptions: () => void
   onDone: () => void
 }) {
   return (
     <footer className="flex shrink-0 flex-col pb-3">
       <div className="h-px bg-[#eaecf0]" />
-      <div className="flex items-center justify-between px-4 pt-3">
+      <div className="flex items-center justify-end gap-3 px-4 pt-3">
         <button
           type="button"
           onClick={onResync}
@@ -301,33 +298,18 @@ export function ResultsFooter({
           <RefreshCw className="size-4" strokeWidth={2} aria-hidden />
           Re-sync
         </button>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onGoToSubscriptions}
-            className={cn(
-              "inline-flex h-9 items-center justify-center gap-2 rounded border border-[#d0d5dd]",
-              "bg-white px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6",
-              "text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.05)] outline-none transition-colors",
-              "hover:bg-[#f9fafb] focus-visible:ring-2 focus-visible:ring-[#84adff]"
-            )}
-          >
-            Go to subscriptions
-            <ArrowRight className="size-4" strokeWidth={2} aria-hidden />
-          </button>
-          <button
-            type="button"
-            onClick={onDone}
-            className={cn(
-              "inline-flex h-9 items-center justify-center rounded border border-[#155eef]",
-              "bg-[#155eef] px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6",
-              "text-white shadow-[0_1px_2px_rgba(16,24,40,0.05)] outline-none transition-colors",
-              "hover:bg-[#004eeb] focus-visible:ring-2 focus-visible:ring-[#84adff]"
-            )}
-          >
-            Done
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onDone}
+          className={cn(
+            "inline-flex h-9 items-center justify-center rounded border border-[#155eef]",
+            "bg-[#155eef] px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6",
+            "text-white shadow-[0_1px_2px_rgba(16,24,40,0.05)] outline-none transition-colors",
+            "hover:bg-[#004eeb] focus-visible:ring-2 focus-visible:ring-[#84adff]"
+          )}
+        >
+          Done
+        </button>
       </div>
     </footer>
   )

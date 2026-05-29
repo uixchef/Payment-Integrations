@@ -1,18 +1,20 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
-import { IntegrationSettingsShell } from "@/components/integrations/settings/integration-settings-shell"
+import { AuthorizeNetSettingsShell } from "@/components/integrations/settings/authorize-net/authorize-net-settings-shell"
+import { MercadoPagoSettingsShell } from "@/components/integrations/settings/mercado-pago/mercado-pago-settings-shell"
 import { ManualPaymentSettingsShell } from "@/components/integrations/settings/manual-payment/manual-payment-settings-shell"
 import { PayPalSettingsShell } from "@/components/integrations/settings/paypal/paypal-settings-shell"
+import { RazorpaySettingsShell } from "@/components/integrations/settings/razorpay/razorpay-settings-shell"
 import { StripeSettingsShell } from "@/components/integrations/settings/stripe/stripe-settings-shell"
 import { INTEGRATIONS } from "@/lib/integrations-data"
 
 const SUPPORTED_SETTINGS = new Set([
   "razorpay",
   "authorize-net",
-  "mercado-pago",
   "manual",
   "stripe",
   "paypal",
+  "mercado-pago",
 ])
 
 type Params = Promise<{ providerId: string }>
@@ -65,5 +67,17 @@ export default async function IntegrationSettingsPage({
     return <PayPalSettingsShell item={item} />
   }
 
-  return <IntegrationSettingsShell item={item} />
+  if (providerId === "mercado-pago") {
+    return <MercadoPagoSettingsShell item={item} />
+  }
+
+  if (providerId === "authorize-net") {
+    return <AuthorizeNetSettingsShell item={item} />
+  }
+
+  if (providerId === "razorpay") {
+    return <RazorpaySettingsShell item={item} />
+  }
+
+  notFound()
 }

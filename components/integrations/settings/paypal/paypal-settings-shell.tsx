@@ -6,10 +6,9 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
+  LogIn,
   LogOut,
   MoreHorizontal,
-  Pencil,
-  Settings2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
@@ -20,7 +19,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { AddAccountButton } from "@/components/integrations/settings/add-account-button"
 import { AddPayPalAccountDialog } from "@/components/integrations/settings/paypal/add-paypal-account-dialog"
 import {
@@ -28,9 +26,16 @@ import {
   type PayPalAccount,
 } from "@/components/integrations/settings/paypal/paypal-account-config"
 import { usePayPalAccounts } from "@/components/integrations/settings/paypal/paypal-accounts-context"
+import { PayPalEmptyState } from "@/components/integrations/settings/paypal/paypal-empty-state"
 import { PayPalGuide } from "@/components/integrations/settings/paypal/paypal-guide"
 import { INTEGRATION_ASSETS } from "@/lib/integration-assets"
 import { getAddAccountButtonState } from "@/lib/integration-account-limits"
+import {
+  DEFAULT_ACCOUNT_DISCONNECT_TOOLTIP,
+  DISCONNECT_ACCOUNT_DESCRIPTION,
+  getSetAsDefaultDisabledReason,
+  getSetAsDefaultTooltip,
+} from "@/lib/set-as-default-tooltip"
 import type { IntegrationItem } from "@/lib/integrations-data"
 import { useIntegrationStatus } from "@/lib/integration-status-context"
 import { cn } from "@/lib/utils"
@@ -66,11 +71,20 @@ function splitVisibility(
 export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
   const router = useRouter()
   const {
+    isConnected: isConnectedFromStatus,
     isDefault: isDefaultFromStatus,
+    defaultProviderId,
+    getDefaultProviderName,
     setConnected,
+    setDefaultProvider,
+    clearDefaultProvider,
   } = useIntegrationStatus()
 
+  const isConnected = isConnectedFromStatus(item.id)
   const isDefault = isDefaultFromStatus(item.id)
+  const currentDefaultName = getDefaultProviderName()
+  const otherDefaultProviderId =
+    defaultProviderId && defaultProviderId !== item.id ? defaultProviderId : null
 
   const {
     accounts,
@@ -78,21 +92,41 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
     activeAccountId,
     defaultAccountId,
     setActiveAccountId,
+    setDefaultAccountId,
     ensureInitialAccount,
     addPendingAccount,
     renameActiveAccount,
     updateActiveAccount,
     connectActiveAccount,
+    completeActiveAccountOAuth,
+    reconnectActiveAccount,
     removeActiveAccount,
   } = usePayPalAccounts()
 
   const [showDisconnectModal, setShowDisconnectModal] = useState(false)
+  const [showReconnectModal, setShowReconnectModal] = useState(false)
+  const [showSwitchDefaultModal, setShowSwitchDefaultModal] = useState(false)
   const [accountDialogMode, setAccountDialogMode] = useState<
     "add" | "edit" | null
   >(null)
 
+  const hasOAuthConnectedAccount = accounts.some(
+    (account) => account.connected && account.oauthConnected
+  )
+  const showOAuthEmptyState = Boolean(
+    activeAccount &&
+      !activeAccount.connected &&
+      (activeAccount.oauthFlow || hasOAuthConnectedAccount)
+  )
+
   const handleSave = () => {
     if (connectActiveAccount()) {
+      setConnected(item.id, true)
+    }
+  }
+
+  const handleConnect = () => {
+    if (completeActiveAccountOAuth()) {
       setConnected(item.id, true)
     }
   }
@@ -120,13 +154,68 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
     }
   }
 
+  const handleConfirmReconnect = () => {
+    if (!reconnectActiveAccount()) return
+
+    const remainingConnected = accounts.filter(
+      (account) =>
+        account.id !== activeAccountId && account.connected
+    )
+    if (remainingConnected.length === 0) {
+      setConnected(item.id, false)
+    }
+  }
+
+  const handleSetAsDefaultChange = (checked: boolean) => {
+    if (!activeAccount?.connected) return
+
+    if (!checked) {
+      if (activeAccountId === defaultAccountId) {
+        setDefaultAccountId(null)
+      }
+      if (isDefault) {
+        clearDefaultProvider()
+      }
+      return
+    }
+
+    if (!isDefault && otherDefaultProviderId) {
+      setShowSwitchDefaultModal(true)
+      return
+    }
+
+    setDefaultAccountId(activeAccountId)
+    if (!isDefault) {
+      setDefaultProvider(item.id)
+    }
+  }
+
+  const handleConfirmSwitchDefault = () => {
+    setDefaultProvider(item.id)
+    setDefaultAccountId(activeAccountId)
+  }
+
   const canSave =
     Boolean(activeAccount?.clientId.trim()) &&
     Boolean(activeAccount?.secretId.trim()) &&
     !activeAccount?.connected
 
-  const isDefaultAccount =
+  const activeIsDefaultAccount =
     isDefault && activeAccountId !== null && activeAccountId === defaultAccountId
+
+  const setAsDefaultState = getSetAsDefaultDisabledReason({
+    multiAccount: true,
+    isConnected,
+    isDefault,
+    activeAccountConnected: Boolean(activeAccount?.connected),
+    activeIsDefaultAccount,
+  })
+  const setAsDefaultTooltip = getSetAsDefaultTooltip({
+    providerName: item.name,
+    multiAccount: true,
+    disabled: setAsDefaultState.disabled,
+    reason: setAsDefaultState.reason,
+  })
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -136,23 +225,36 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
         activeAccountId={activeAccountId}
         defaultAccountId={defaultAccountId}
         isDefault={isDefault}
-        activeAccountConnected={Boolean(activeAccount?.connected)}
         onSelectAccount={setActiveAccountId}
         onAddAccount={() => setAccountDialogMode("add")}
-        onOpenPaymentMethods={() =>
-          router.push("/integrations/paypal/payment-methods")
-        }
       />
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[12px] bg-white shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)]">
           <div className="flex min-h-0 flex-1 overflow-y-auto p-6">
-            <div className="mx-auto flex w-full max-w-[1080px] gap-10">
-              <div className="flex w-full max-w-[656px] min-w-0 flex-1 justify-start">
-                {activeAccount ? (
+            <div className="mx-auto flex w-full max-w-[1180px] gap-10">
+              <div className="flex w-full max-w-[756px] min-w-0 flex-1 justify-start">
+                {showOAuthEmptyState ? (
+                  <PayPalEmptyState
+                    onWatchVideo={() => {
+                      window.open(
+                        "https://www.youtube.com/results?search_query=paypal+integration+setup",
+                        "_blank",
+                        "noopener,noreferrer"
+                      )
+                    }}
+                    onConnect={handleConnect}
+                  />
+                ) : activeAccount ? (
                   <PayPalAccountConfig
                     account={activeAccount}
-                    isDefaultAccount={isDefaultAccount}
+                    isDefaultAccount={activeIsDefaultAccount}
+                    setAsDefaultChecked={activeIsDefaultAccount}
+                    setAsDefaultDisabled={setAsDefaultState.disabled}
+                    setAsDefaultTooltip={setAsDefaultTooltip}
+                    disconnectDisabled={activeIsDefaultAccount}
+                    disconnectTooltip={DEFAULT_ACCOUNT_DISCONNECT_TOOLTIP}
+                    disconnectDescription={DISCONNECT_ACCOUNT_DESCRIPTION}
                     onModeChange={(mode) => updateActiveAccount({ mode })}
                     onClientIdChange={(clientId) =>
                       updateActiveAccount({ clientId })
@@ -160,6 +262,13 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
                     onSecretIdChange={(secretId) =>
                       updateActiveAccount({ secretId })
                     }
+                    onSetAsDefaultChange={handleSetAsDefaultChange}
+                    onOpenPaymentMethods={() =>
+                      router.push("/integrations/paypal/payment-methods")
+                    }
+                    onReconnect={() => setShowReconnectModal(true)}
+                    onEditAccount={() => setAccountDialogMode("edit")}
+                    onDisconnect={() => setShowDisconnectModal(true)}
                   />
                 ) : null}
               </div>
@@ -168,19 +277,9 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
             </div>
           </div>
 
-          {activeAccount?.connected ? (
-            <ConnectedFooter
-              isDefaultAccount={isDefaultAccount}
-              onEditAccount={() => setAccountDialogMode("edit")}
-              onDisconnect={() => setShowDisconnectModal(true)}
-            />
-          ) : (
-            <PendingFooter
-              canSave={canSave}
-              onEditAccount={() => setAccountDialogMode("edit")}
-              onSave={handleSave}
-            />
-          )}
+          {!activeAccount?.connected && !showOAuthEmptyState ? (
+            <PendingFooter canSave={canSave} onSave={handleSave} />
+          ) : null}
         </div>
       </div>
 
@@ -200,6 +299,18 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
             handleRenameActiveAccount(label)
           }
         }}
+      />
+
+      <ConfirmationDialog
+        open={showReconnectModal}
+        onOpenChange={setShowReconnectModal}
+        title="Reconnect PayPal integration"
+        description="You're about to refresh your PayPal connection. This will update your credentials and ensure ongoing access to payment services with the new flow."
+        confirmLabel="Reconnect"
+        cancelLabel="Cancel"
+        variant="primary"
+        icon={<LogIn className="size-6" strokeWidth={1.75} aria-hidden />}
+        onConfirm={handleConfirmReconnect}
       />
 
       <ConfirmationDialog
@@ -224,6 +335,33 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
         icon={<LogOut className="size-6" strokeWidth={1.75} aria-hidden />}
         onConfirm={handleDisconnect}
       />
+
+      <ConfirmationDialog
+        open={showSwitchDefaultModal}
+        onOpenChange={setShowSwitchDefaultModal}
+        title="Switch default payment provider?"
+        description={
+          currentDefaultName ? (
+            <>
+              <strong className="font-semibold text-[#101828]">
+                {currentDefaultName}
+              </strong>{" "}
+              is currently the default. Switching to{" "}
+              <strong className="font-semibold text-[#101828]">{item.name}</strong>{" "}
+              will route new transactions through it instead.
+            </>
+          ) : (
+            <>
+              Set <strong className="font-semibold text-[#101828]">{item.name}</strong>{" "}
+              as the default provider for new transactions?
+            </>
+          )
+        }
+        confirmLabel="Switch default"
+        cancelLabel="Cancel"
+        variant="warning"
+        onConfirm={handleConfirmSwitchDefault}
+      />
     </div>
   )
 }
@@ -234,26 +372,32 @@ function SubHeader({
   activeAccountId,
   defaultAccountId,
   isDefault,
-  activeAccountConnected,
   onSelectAccount,
   onAddAccount,
-  onOpenPaymentMethods,
 }: {
   item: IntegrationItem
   accounts: PayPalAccount[]
   activeAccountId: string | null
   defaultAccountId: string | null
   isDefault: boolean
-  activeAccountConnected: boolean
   onSelectAccount: (id: string) => void
   onAddAccount: () => void
-  onOpenPaymentMethods: () => void
 }) {
+  const hasOAuthConnectedAccount = accounts.some(
+    (account) => account.connected && account.oauthConnected
+  )
   const addAccountState = getAddAccountButtonState({
     accountsCount: accounts.length,
-    hasConnectedAccount: accounts.some((account) => account.connected),
+    hasConnectedAccount: hasOAuthConnectedAccount,
     requireConnectedBeforeAdd: true,
   })
+  const addAccountDisabledReason =
+    addAccountState.disabled &&
+    accounts.some(
+      (account) => account.connected && !account.oauthConnected
+    )
+      ? "Reconnect your PayPal account before adding another one."
+      : addAccountState.disabledReason
   const logo = item.logo ?? INTEGRATION_ASSETS.logos.placeholder
   const showAccountTabs = accounts.length > 0
   const { visible: visibleAccounts, overflow: overflowAccounts } =
@@ -331,33 +475,9 @@ function SubHeader({
 
           <AddAccountButton
             disabled={addAccountState.disabled}
-            disabledReason={addAccountState.disabledReason}
+            disabledReason={addAccountDisabledReason}
             onAddAccount={onAddAccount}
           />
-
-          {activeAccountConnected ? (
-            <>
-              <div className="ml-auto" />
-
-              <div className="flex shrink-0 items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onOpenPaymentMethods}
-                  className={cn(
-                    "h-9 gap-2 rounded px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 shadow-none",
-                    "border-[#84adff] bg-white text-[#004eeb] shadow-[0_1px_2px_rgba(16,24,40,0.05)]",
-                    "hover:border-[#84adff] hover:bg-[#f5f8ff] hover:text-[#004eeb]"
-                  )}
-                >
-                  <Settings2 className="size-4" strokeWidth={1.75} aria-hidden />
-                  Payment methods
-                </Button>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1" />
-          )}
         </div>
       ) : (
         <div className="flex-1" />
@@ -440,30 +560,15 @@ function VerticalDivider() {
 
 function PendingFooter({
   canSave,
-  onEditAccount,
   onSave,
 }: {
   canSave: boolean
-  onEditAccount: () => void
   onSave: () => void
 }) {
   return (
-    <footer className="flex flex-col gap-3 pt-0">
+    <footer className="flex shrink-0 flex-col pb-4 pt-0">
       <Separator className="bg-[#eaecf0]" />
-      <div className="flex items-center justify-between px-6 pb-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onEditAccount}
-          className={cn(
-            "h-9 gap-2 rounded px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 shadow-none",
-            "border-[#d0d5dd] bg-white text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.05)]",
-            "hover:bg-[#f9fafb]"
-          )}
-        >
-          <Pencil className="size-4" strokeWidth={1.75} aria-hidden />
-          Edit account
-        </Button>
+      <div className="flex items-center justify-end px-6 pt-4">
         <Button
           type="button"
           disabled={!canSave}
@@ -476,66 +581,6 @@ function PendingFooter({
         >
           Save
         </Button>
-      </div>
-    </footer>
-  )
-}
-
-function ConnectedFooter({
-  isDefaultAccount,
-  onEditAccount,
-  onDisconnect,
-}: {
-  isDefaultAccount: boolean
-  onEditAccount: () => void
-  onDisconnect: () => void
-}) {
-  const disconnectButton = (
-    <Button
-      type="button"
-      variant="outline"
-      aria-disabled={isDefaultAccount}
-      onClick={isDefaultAccount ? undefined : onDisconnect}
-      className={cn(
-        "h-9 rounded px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6",
-        "shadow-[0_1px_2px_rgba(16,24,40,0.05)]",
-        isDefaultAccount
-          ? "cursor-not-allowed border-[#fecdca] bg-white text-[#fda29b] hover:border-[#fecdca] hover:bg-white hover:text-[#fda29b]"
-          : "border-[#fda29b] bg-white text-[#b42318] hover:border-[#f97066] hover:bg-[#fef3f2] hover:text-[#b42318]"
-      )}
-    >
-      Disconnect
-    </Button>
-  )
-
-  return (
-    <footer className="flex flex-col gap-3 pt-0">
-      <Separator className="bg-[#eaecf0]" />
-      <div className="flex items-center justify-between px-6 pb-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onEditAccount}
-          className={cn(
-            "h-9 gap-2 rounded px-2.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 shadow-none",
-            "border-[#d0d5dd] bg-white text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.05)]",
-            "hover:bg-[#f9fafb]"
-          )}
-        >
-          <Pencil className="size-4" strokeWidth={1.75} aria-hidden />
-          Edit account
-        </Button>
-        {isDefaultAccount ? (
-          <Tooltip>
-            <TooltipTrigger asChild>{disconnectButton}</TooltipTrigger>
-            <TooltipContent side="top" sideOffset={6} className="max-w-[280px]">
-              The provider is set as the default payment option. To disconnect,
-              please select another provider as the default first.
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          disconnectButton
-        )}
       </div>
     </footer>
   )

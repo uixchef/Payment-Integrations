@@ -14,18 +14,13 @@ import type { FilterType } from "@/lib/integration-filters"
 import type { IntegrationFilterSelections } from "@/lib/filter-integrations"
 import { INTEGRATION_ASSETS } from "@/lib/integration-assets"
 import { useIntegrationStatus } from "@/lib/integration-status-context"
+import {
+  getIntegrationCtaHref,
+  providerHasSettings,
+} from "@/lib/integration-cta-routes"
 import type { IntegrationItem } from "@/lib/integrations-data"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
-
-const PROVIDERS_WITH_SETTINGS = new Set([
-  "razorpay",
-  "authorize-net",
-  "mercado-pago",
-  "manual",
-  "stripe",
-  "paypal",
-])
 
 const TABLE_COLUMNS =
   "grid grid-cols-[320px_minmax(220px,1fr)_minmax(220px,1fr)_120px]"
@@ -150,7 +145,8 @@ function TableRow({ item }: { item: IntegrationItem }) {
   const { isConnected, isDefault } = useIntegrationStatus()
   const connected = isConnected(item.id)
   const defaultProvider = isDefault(item.id)
-  const hasSettings = PROVIDERS_WITH_SETTINGS.has(item.id)
+  const hasSettings = providerHasSettings(item.id)
+  const ctaHref = getIntegrationCtaHref(item.id, connected)
   const ctaLabel = connected ? "Manage" : "Connect"
   const ctaClassName =
     "rounded border-[#d0d5dd] bg-white px-2.5 text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.05)] hover:border-[#84adff] hover:bg-white hover:text-[#004eeb]"
@@ -180,9 +176,9 @@ function TableRow({ item }: { item: IntegrationItem }) {
       </div>
 
       <div className="flex h-16 items-center border-b border-[#d0d5dd] px-3 py-1.5">
-        {hasSettings ? (
+        {hasSettings && ctaHref ? (
           <Button asChild variant="outline" className={ctaClassName}>
-            <Link href={`/integrations/${item.id}`}>{ctaLabel}</Link>
+            <Link href={ctaHref}>{ctaLabel}</Link>
           </Button>
         ) : (
           <Button type="button" variant="outline" className={ctaClassName}>

@@ -82,8 +82,8 @@ export function RazorpayManageShell({ item }: { item: IntegrationItem }) {
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[12px] bg-white shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)]">
         <div className="shrink-0 border-b border-[#eaecf0] px-6 pb-0 pt-5">
           <Link
-            href={`/integrations/${item.id}`}
-            aria-label={`Back to ${item.name} integration settings`}
+            href="/integrations"
+            aria-label="Back to integrations"
             className="inline-flex items-center gap-1.5 font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-[#004eeb] outline-none transition-colors hover:text-[#155eef] focus-visible:ring-2 focus-visible:ring-[#84adff]"
           >
             <ArrowLeft className="size-4" strokeWidth={1.75} aria-hidden />

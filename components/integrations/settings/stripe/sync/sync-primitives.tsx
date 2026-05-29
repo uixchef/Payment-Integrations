@@ -9,8 +9,14 @@ import {
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
-import type { AvatarTone, CardBrand, NotEligibleReason } from "./sync-mock-data"
+import type {
+  AvatarTone,
+  CardBrand,
+  NotEligibleReason,
+  SavedPaymentMethod,
+} from "./sync-mock-data"
 
 /* -------------------------------------------------------------------------- */
 /* Toggle card                                                                */
@@ -54,13 +60,11 @@ function FeaturedIcon({
 export function ToggleCard({
   iconKey,
   title,
-  description,
   checked,
   onCheckedChange,
 }: {
   iconKey: ToggleIconKey
   title: string
-  description: string
   checked: boolean
   onCheckedChange: (next: boolean) => void
 }) {
@@ -70,22 +74,19 @@ export function ToggleCard({
       aria-label={title}
       onClick={() => onCheckedChange(!checked)}
       className={cn(
-        "flex w-full cursor-pointer items-start gap-2 rounded-[4px] border bg-white p-3 transition-colors",
+        "flex w-full cursor-pointer items-center gap-2 rounded-[4px] border bg-white p-3 transition-colors",
         checked
           ? "border-[#155eef] shadow-[0_1px_2px_rgba(16,24,40,0.05)]"
           : "border-[#d0d5dd] hover:border-[#98a2b3]"
       )}
     >
       <FeaturedIcon iconKey={iconKey} selected={checked} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 items-center">
         <p className="font-[family-name:var(--font-inter)] text-base font-medium leading-6 text-[#101828]">
           {title}
         </p>
-        <p className="font-[family-name:var(--font-inter)] text-sm font-normal leading-5 text-[#475467]">
-          {description}
-        </p>
       </div>
-      <div className="flex shrink-0 items-center pt-0.5">
+      <div className="flex shrink-0 items-center">
         <Switch
           size="sm"
           checked={checked}
@@ -400,6 +401,92 @@ export function BrandChip({ brand }: { brand: CardBrand }) {
     >
       {cfg.label}
     </span>
+  )
+}
+
+const paymentMethodTagShellClassName =
+  "inline-flex h-7 max-h-7 min-h-7 shrink-0 items-center gap-1 rounded bg-[#f2f4f7] px-2"
+
+const paymentMethodTagLabelClassName =
+  "whitespace-nowrap font-[family-name:var(--font-inter)] text-sm font-medium leading-5 text-[#344054]"
+
+function PaymentMethodTag({ method }: { method: SavedPaymentMethod }) {
+  return (
+    <span className={paymentMethodTagShellClassName}>
+      <BrandChip brand={method.brand} />
+      <span className={paymentMethodTagLabelClassName}>••••{method.last4}</span>
+    </span>
+  )
+}
+
+function PaymentMethodsTooltipContent({
+  methods,
+}: {
+  methods: SavedPaymentMethod[]
+}) {
+  return (
+    <div className="flex w-fit flex-wrap items-center gap-1">
+      {methods.map((method, index) => (
+        <PaymentMethodTag
+          key={`${method.brand}-${method.last4}-${index}`}
+          method={method}
+        />
+      ))}
+    </div>
+  )
+}
+
+export function SavedPaymentMethodDisplay({
+  methods,
+  className,
+}: {
+  methods: SavedPaymentMethod[]
+  className?: string
+}) {
+  if (methods.length === 0) return null
+
+  const primary = methods[0]
+  const extraMethods = methods.slice(1)
+  const extraCount = extraMethods.length
+
+  return (
+    <div
+      className={cn(
+        "flex min-w-0 w-full items-center gap-1 overflow-hidden font-[family-name:var(--font-inter)] text-base font-medium leading-6 text-[#475467]",
+        className
+      )}
+    >
+      <BrandChip brand={primary.brand} />
+      <span className="flex min-w-0 items-center truncate font-[family-name:var(--font-inter)] text-base font-medium leading-6">
+        <span className="truncate">••••{primary.last4}</span>
+        {extraCount > 0 ? (
+          <>
+            <span className="shrink-0">, </span>
+            <Tooltip delayDuration={200}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={`${extraCount} more payment methods. Hover to preview.`}
+                  className="shrink-0 cursor-default bg-transparent p-0 font-[family-name:var(--font-inter)] text-base font-medium leading-6 text-[#475467] outline-none focus-visible:ring-2 focus-visible:ring-[#84adff]"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  +{extraCount}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent
+                fitContent
+                side="top"
+                align="start"
+                sideOffset={6}
+                className="rounded border-0 p-2 text-left shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)]"
+              >
+                <PaymentMethodsTooltipContent methods={extraMethods} />
+              </TooltipContent>
+            </Tooltip>
+          </>
+        ) : null}
+      </span>
+    </div>
   )
 }
 

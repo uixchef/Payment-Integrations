@@ -26,6 +26,7 @@ import {
   Checkbox,
   InfoBanner,
   NotEligibleReasonPill,
+  SavedPaymentMethodDisplay,
   SelectionSummary,
   StatusPill,
   SubscriptionStatusPill,
@@ -538,12 +539,7 @@ function ContactsTable({
               </div>
             </BodyCell>
             <BodyCell tone="secondary">
-              <div className={BODY_PAYMENT_ROW}>
-                <BrandChip brand={row.brand} />
-                <span className={BODY_TEXT} title={`••••${row.cardLast4}`}>
-                  ••••{row.cardLast4}
-                </span>
-              </div>
+              <SavedPaymentMethodDisplay methods={row.paymentMethods} />
             </BodyCell>
             <BodyCell tone="secondary" last>
               <span className={cn(BODY_TEXT, "block text-[#475467]")} title={row.expiry}>
@@ -676,14 +672,7 @@ function SubscriptionsTable({
               </span>
             </BodyCell>
             <BodyCell tone="secondary">
-              <div className={BODY_PAYMENT_ROW}>
-                <span className="inline-flex h-6 w-8 shrink-0 items-center justify-center rounded-[2px] border border-[#eaecf0] bg-white">
-                  <BrandChip brand={row.brand} />
-                </span>
-                <span className={BODY_TEXT} title={`••••${row.cardLast4}`}>
-                  ••••{row.cardLast4}
-                </span>
-              </div>
+              <SavedPaymentMethodDisplay methods={row.paymentMethods} />
             </BodyCell>
             <BodyCell last>
               <div className="min-w-0 max-w-full overflow-hidden">

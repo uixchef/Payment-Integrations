@@ -3,6 +3,12 @@ export type SetAsDefaultDisabledReason =
   | "already-default-account"
   | "already-default-provider"
 
+export const DEFAULT_ACCOUNT_DISCONNECT_TOOLTIP =
+  "This provider (or account) is set as default. To disconnect, select another provider (or account) as the default first."
+
+export const DISCONNECT_ACCOUNT_DESCRIPTION =
+  "Payments in flight will continue. New payments fall back to the default provider (or account)."
+
 export function getSetAsDefaultTooltip({
   providerName,
   multiAccount = false,
@@ -32,7 +38,7 @@ export function getSetAsDefaultTooltip({
   }
 
   return multiAccount
-    ? `Use this ${providerName} account as your primary provider for new payment channels.`
+    ? `Use this ${providerName} account for new payments and invoices. Turn off to remove it as the default.`
     : `Use ${providerName} as your primary provider for new payment channels.`
 }
 
@@ -55,9 +61,6 @@ export function getSetAsDefaultDisabledReason({
   if (multiAccount) {
     if (!activeAccountConnected) {
       return { disabled: true, reason: "not-connected" }
-    }
-    if (activeIsDefaultAccount) {
-      return { disabled: true, reason: "already-default-account" }
     }
     return { disabled: false }
   }

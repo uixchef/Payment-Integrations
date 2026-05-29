@@ -1,6 +1,10 @@
 "use client"
 
 import {
+  SettingsCard,
+  SettingsCardDivider,
+} from "@/components/integrations/settings/account-settings-card"
+import {
   ConnectionStatusTag,
   envPlaceholder,
   ModeSwitcher,
@@ -37,12 +41,9 @@ export function AuthorizeNetSettingsForm({
   }
 
   return (
-    <form
-      className="flex w-full max-w-[656px] flex-col"
-      onSubmit={(event) => event.preventDefault()}
-    >
-      <div className="flex items-center gap-6">
-        <div className="flex min-w-0 flex-1 items-center gap-1">
+    <SettingsCard className="max-w-[756px]">
+      <div className="flex items-center gap-4">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <h2 className="font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-[#101828]">
             Authorize.net configuration
           </h2>
@@ -51,7 +52,9 @@ export function AuthorizeNetSettingsForm({
         <ModeSwitcher value={mode} onChange={(next) => update({ mode: next })} />
       </div>
 
-      <div className="flex flex-col gap-4 pt-6">
+      <SettingsCardDivider />
+
+      <div className="flex w-full flex-col gap-4">
         <div className="flex flex-col gap-1">
           <SettingsFormLabel htmlFor="authorize-login-id" required>
             Login id
@@ -93,6 +96,6 @@ export function AuthorizeNetSettingsForm({
           />
         </div>
       </div>
-    </form>
+    </SettingsCard>
   )
 }
