@@ -17,6 +17,25 @@ import {
 } from "@/components/integrations/settings/stripe/sync/stripe-sync-progress"
 import { cn } from "@/lib/utils"
 
+const STRIPE_SYNC_DOCS_HREF =
+  "https://help.gohighlevel.com/support/solutions/articles/48000980323-stripe-integration"
+
+function StripeSyncCardDescription() {
+  return (
+    <p className="font-[family-name:var(--font-inter)] text-base leading-6 text-[#475467]">
+      Import saved customers, payment methods, and subscriptions seamlessly.{" "}
+      <a
+        href={STRIPE_SYNC_DOCS_HREF}
+        target="_blank"
+        rel="noreferrer noopener"
+        className="font-medium text-[#004eeb] outline-none transition-colors hover:text-[#0040c1] focus-visible:underline"
+      >
+        Learn more.
+      </a>
+    </p>
+  )
+}
+
 type StripeSyncCardProps = {
   enabled: boolean
   syncState?: StripeSyncState | null
@@ -129,10 +148,7 @@ function StripeSyncIncompleteCard({
         </h2>
       </div>
 
-      <p className="font-[family-name:var(--font-inter)] text-base leading-6 text-[#475467]">
-        HighLevel imports saved payment references already stored in Stripe. No
-        card re-entry required for your customers.
-      </p>
+      <StripeSyncCardDescription />
 
       <button
         type="button"
@@ -430,10 +446,7 @@ export function StripeSyncCard({
         </h2>
       </div>
 
-      <p className="font-[family-name:var(--font-inter)] text-base leading-6 text-[#475467]">
-        HighLevel imports saved payment references already stored in Stripe. No
-        card re-entry required for your customers.
-      </p>
+      <StripeSyncCardDescription />
 
       {enabled ? (
         syncButton

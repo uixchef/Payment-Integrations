@@ -33,8 +33,6 @@ import { getAddAccountButtonState } from "@/lib/integration-account-limits"
 import {
   DEFAULT_ACCOUNT_DISCONNECT_TOOLTIP,
   DISCONNECT_ACCOUNT_DESCRIPTION,
-  getSetAsDefaultDisabledReason,
-  getSetAsDefaultTooltip,
 } from "@/lib/set-as-default-tooltip"
 import type { IntegrationItem } from "@/lib/integrations-data"
 import { useIntegrationStatus } from "@/lib/integration-status-context"
@@ -73,26 +71,17 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
   const {
     isConnected: isConnectedFromStatus,
     isDefault: isDefaultFromStatus,
-    defaultProviderId,
-    getDefaultProviderName,
     setConnected,
-    setDefaultProvider,
-    clearDefaultProvider,
   } = useIntegrationStatus()
 
   const isConnected = isConnectedFromStatus(item.id)
   const isDefault = isDefaultFromStatus(item.id)
-  const currentDefaultName = getDefaultProviderName()
-  const otherDefaultProviderId =
-    defaultProviderId && defaultProviderId !== item.id ? defaultProviderId : null
 
   const {
     accounts,
     activeAccount,
     activeAccountId,
-    defaultAccountId,
     setActiveAccountId,
-    setDefaultAccountId,
     ensureInitialAccount,
     addPendingAccount,
     renameActiveAccount,
@@ -105,7 +94,6 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
 
   const [showDisconnectModal, setShowDisconnectModal] = useState(false)
   const [showReconnectModal, setShowReconnectModal] = useState(false)
-  const [showSwitchDefaultModal, setShowSwitchDefaultModal] = useState(false)
   const [accountDialogMode, setAccountDialogMode] = useState<
     "add" | "edit" | null
   >(null)
@@ -166,56 +154,10 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
     }
   }
 
-  const handleSetAsDefaultChange = (checked: boolean) => {
-    if (!activeAccount?.connected) return
-
-    if (!checked) {
-      if (activeAccountId === defaultAccountId) {
-        setDefaultAccountId(null)
-      }
-      if (isDefault) {
-        clearDefaultProvider()
-      }
-      return
-    }
-
-    if (!isDefault && otherDefaultProviderId) {
-      setShowSwitchDefaultModal(true)
-      return
-    }
-
-    setDefaultAccountId(activeAccountId)
-    if (!isDefault) {
-      setDefaultProvider(item.id)
-    }
-  }
-
-  const handleConfirmSwitchDefault = () => {
-    setDefaultProvider(item.id)
-    setDefaultAccountId(activeAccountId)
-  }
-
   const canSave =
     Boolean(activeAccount?.clientId.trim()) &&
     Boolean(activeAccount?.secretId.trim()) &&
     !activeAccount?.connected
-
-  const activeIsDefaultAccount =
-    isDefault && activeAccountId !== null && activeAccountId === defaultAccountId
-
-  const setAsDefaultState = getSetAsDefaultDisabledReason({
-    multiAccount: true,
-    isConnected,
-    isDefault,
-    activeAccountConnected: Boolean(activeAccount?.connected),
-    activeIsDefaultAccount,
-  })
-  const setAsDefaultTooltip = getSetAsDefaultTooltip({
-    providerName: item.name,
-    multiAccount: true,
-    disabled: setAsDefaultState.disabled,
-    reason: setAsDefaultState.reason,
-  })
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -223,8 +165,6 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
         item={item}
         accounts={accounts}
         activeAccountId={activeAccountId}
-        defaultAccountId={defaultAccountId}
-        isDefault={isDefault}
         onSelectAccount={setActiveAccountId}
         onAddAccount={() => setAccountDialogMode("add")}
       />
@@ -248,11 +188,8 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
                 ) : activeAccount ? (
                   <PayPalAccountConfig
                     account={activeAccount}
-                    isDefaultAccount={activeIsDefaultAccount}
-                    setAsDefaultChecked={activeIsDefaultAccount}
-                    setAsDefaultDisabled={setAsDefaultState.disabled}
-                    setAsDefaultTooltip={setAsDefaultTooltip}
-                    disconnectDisabled={activeIsDefaultAccount}
+                    isDefaultAccount={isDefault}
+                    disconnectDisabled={isDefault}
                     disconnectTooltip={DEFAULT_ACCOUNT_DISCONNECT_TOOLTIP}
                     disconnectDescription={DISCONNECT_ACCOUNT_DESCRIPTION}
                     onModeChange={(mode) => updateActiveAccount({ mode })}
@@ -262,7 +199,6 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
                     onSecretIdChange={(secretId) =>
                       updateActiveAccount({ secretId })
                     }
-                    onSetAsDefaultChange={handleSetAsDefaultChange}
                     onOpenPaymentMethods={() =>
                       router.push("/integrations/paypal/payment-methods")
                     }
@@ -335,33 +271,6 @@ export function PayPalSettingsShell({ item }: { item: IntegrationItem }) {
         icon={<LogOut className="size-6" strokeWidth={1.75} aria-hidden />}
         onConfirm={handleDisconnect}
       />
-
-      <ConfirmationDialog
-        open={showSwitchDefaultModal}
-        onOpenChange={setShowSwitchDefaultModal}
-        title="Switch default payment provider?"
-        description={
-          currentDefaultName ? (
-            <>
-              <strong className="font-semibold text-[#101828]">
-                {currentDefaultName}
-              </strong>{" "}
-              is currently the default. Switching to{" "}
-              <strong className="font-semibold text-[#101828]">{item.name}</strong>{" "}
-              will route new transactions through it instead.
-            </>
-          ) : (
-            <>
-              Set <strong className="font-semibold text-[#101828]">{item.name}</strong>{" "}
-              as the default provider for new transactions?
-            </>
-          )
-        }
-        confirmLabel="Switch default"
-        cancelLabel="Cancel"
-        variant="warning"
-        onConfirm={handleConfirmSwitchDefault}
-      />
     </div>
   )
 }
@@ -370,16 +279,12 @@ function SubHeader({
   item,
   accounts,
   activeAccountId,
-  defaultAccountId,
-  isDefault,
   onSelectAccount,
   onAddAccount,
 }: {
   item: IntegrationItem
   accounts: PayPalAccount[]
   activeAccountId: string | null
-  defaultAccountId: string | null
-  isDefault: boolean
   onSelectAccount: (id: string) => void
   onAddAccount: () => void
 }) {
@@ -434,8 +339,6 @@ function SubHeader({
           <div className="flex h-full min-w-0 items-center gap-2 overflow-x-auto">
             {visibleAccounts.map((account) => {
               const active = account.id === activeAccountId
-              const isAccountDefault =
-                isDefault && account.id === defaultAccountId
               return (
                 <button
                   key={account.id}
@@ -453,7 +356,6 @@ function SubHeader({
                   title={account.label}
                 >
                   <span className="truncate">{account.label}</span>
-                  {isAccountDefault ? <DefaultBadge active={active} /> : null}
                 </button>
               )
             })}
@@ -465,8 +367,6 @@ function SubHeader({
             <>
               <MoreAccountsMenu
                 accounts={overflowAccounts}
-                defaultAccountId={defaultAccountId}
-                isDefault={isDefault}
                 onSelectAccount={onSelectAccount}
               />
               <VerticalDivider />
@@ -486,31 +386,11 @@ function SubHeader({
   )
 }
 
-function DefaultBadge({ active }: { active: boolean }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex h-[18px] shrink-0 items-center justify-center rounded px-1.5",
-        "font-[family-name:var(--font-inter)] text-sm font-medium leading-5",
-        active
-          ? "bg-[#eff4ff] text-[#004eeb]"
-          : "bg-[#f2f4f7] text-[#475467]"
-      )}
-    >
-      Default
-    </span>
-  )
-}
-
 function MoreAccountsMenu({
   accounts,
-  defaultAccountId,
-  isDefault,
   onSelectAccount,
 }: {
   accounts: PayPalAccount[]
-  defaultAccountId: string | null
-  isDefault: boolean
   onSelectAccount: (id: string) => void
 }) {
   return (
@@ -530,20 +410,15 @@ function MoreAccountsMenu({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" sideOffset={6} className="min-w-[180px]">
-        {accounts.map((account) => {
-          const isAccountDefault =
-            isDefault && account.id === defaultAccountId
-          return (
-            <DropdownMenuItem
-              key={account.id}
-              onSelect={() => onSelectAccount(account.id)}
-              className="flex items-center justify-between gap-2"
-            >
-              <span className="truncate">{account.label}</span>
-              {isAccountDefault ? <DefaultBadge active={false} /> : null}
-            </DropdownMenuItem>
-          )
-        })}
+        {accounts.map((account) => (
+          <DropdownMenuItem
+            key={account.id}
+            onSelect={() => onSelectAccount(account.id)}
+            className="flex items-center justify-between gap-2"
+          >
+            <span className="truncate">{account.label}</span>
+          </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   )

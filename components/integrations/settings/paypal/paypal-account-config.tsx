@@ -13,7 +13,6 @@ import {
   Pencil,
   RefreshCw,
   Settings2,
-  Star,
   UserRound,
 } from "lucide-react"
 import {
@@ -22,7 +21,6 @@ import {
   SettingsCardDivider,
   SettingsCardTitle,
   SettingsPrimaryActionRow,
-  SettingsToggleRow,
 } from "@/components/integrations/settings/account-settings-card"
 import {
   ConnectionStatusTag,
@@ -52,16 +50,12 @@ export type PayPalAccount = {
 type PayPalAccountConfigProps = {
   account: PayPalAccount
   isDefaultAccount: boolean
-  setAsDefaultChecked: boolean
-  setAsDefaultDisabled: boolean
-  setAsDefaultTooltip?: string
   disconnectDisabled: boolean
   disconnectTooltip?: string
   disconnectDescription: string
   onModeChange: (mode: IntegrationEnvironment) => void
   onClientIdChange: (clientId: string) => void
   onSecretIdChange: (secretId: string) => void
-  onSetAsDefaultChange: (checked: boolean) => void
   onOpenPaymentMethods: () => void
   onReconnect: () => void
   onEditAccount: () => void
@@ -71,16 +65,12 @@ type PayPalAccountConfigProps = {
 export function PayPalAccountConfig({
   account,
   isDefaultAccount,
-  setAsDefaultChecked,
-  setAsDefaultDisabled,
-  setAsDefaultTooltip,
   disconnectDisabled,
   disconnectTooltip,
   disconnectDescription,
   onModeChange,
   onClientIdChange,
   onSecretIdChange,
-  onSetAsDefaultChange,
   onOpenPaymentMethods,
   onReconnect,
   onEditAccount,
@@ -122,19 +112,6 @@ export function PayPalAccountConfig({
 
       <SettingsCard>
         <SettingsCardTitle>Account settings</SettingsCardTitle>
-        <SettingsCardDivider />
-
-        <SettingsToggleRow
-          title="Use as default PayPal account"
-          description="New payments and invoices use this account when nothing else is specified."
-          icon={<Star className="size-5" strokeWidth={1.75} aria-hidden />}
-          checked={setAsDefaultChecked}
-          disabled={setAsDefaultDisabled}
-          tooltip={setAsDefaultTooltip}
-          onCheckedChange={onSetAsDefaultChange}
-          ariaLabel="Use as default PayPal account"
-        />
-
         <SettingsCardDivider />
 
         <SettingsActionRow
