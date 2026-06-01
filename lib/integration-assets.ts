@@ -51,6 +51,9 @@ export const INTEGRATION_ASSETS = {
   },
   banner: {
     stepArrow: "/integrations/banner/step-arrow.svg",
+    completedTick: "/integrations/banner/completed-tick.png",
+    linkActive: "/integrations/banner/link-active.png",
+    linkMuted: "/integrations/banner/link-muted.png",
     productWaterBottle: "/integrations/banner/product-water-bottle.png",
     productBicycle: "/integrations/banner/product-bicycle.png",
     nmi: "/integrations/banner/nmi.png",

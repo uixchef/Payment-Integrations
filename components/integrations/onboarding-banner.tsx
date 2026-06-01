@@ -1,36 +1,57 @@
-import {
-  LinkStepPreview,
-  ProductsStepPreview,
-  ProvidersStepPreview,
-} from "@/components/integrations/banner-step-previews"
+"use client"
+
+import { useCallback, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import type { LucideIcon } from "lucide-react"
+import { CreditCard, Package } from "lucide-react"
 import { INTEGRATION_ASSETS } from "@/lib/integration-assets"
+import { INTEGRATIONS } from "@/lib/integrations-data"
+import { useIntegrationStatus } from "@/lib/integration-status-context"
+import {
+  getOnboardingProductsCount,
+  incrementOnboardingProducts,
+  resolveOnboardingStepStatus,
+  type OnboardingStepStatus,
+} from "@/lib/onboarding-progress"
 import { cn } from "@/lib/utils"
 
 const BANNER = INTEGRATION_ASSETS.banner
 
-const steps = [
+type StepDefinition = {
+  id: "connect" | "product" | "link"
+  pendingTitle: string
+  pendingAction: string
+  completedTitle: string
+  icon?: LucideIcon
+  iconImages?: { active: string; muted: string }
+}
+
+const STEP_DEFINITIONS: StepDefinition[] = [
   {
     id: "connect",
-    title: "Connect a provider",
-    action: "Connect",
-    actionEnabled: true,
-    preview: <ProvidersStepPreview />,
+    pendingTitle: "Connect a provider",
+    pendingAction: "Connect",
+    completedTitle: "Provider(s) connected",
+    icon: CreditCard,
   },
   {
     id: "product",
-    title: "Create your first product",
-    action: "Create",
-    actionEnabled: true,
-    preview: <ProductsStepPreview />,
+    pendingTitle: "Create your first product",
+    pendingAction: "Create",
+    completedTitle: "Product(s) created",
+    icon: Package,
   },
   {
     id: "link",
-    title: "Accept via payment link",
-    action: "Accept",
-    actionEnabled: false,
-    preview: <LinkStepPreview />,
+    pendingTitle: "Accept via payment link",
+    pendingAction: "Accept",
+    completedTitle: "Accept via payment link",
+    iconImages: {
+      active: BANNER.linkActive,
+      muted: BANNER.linkMuted,
+    },
   },
-] as const
+]
 
 function StepConnector() {
   return (
@@ -50,31 +71,121 @@ function StepConnector() {
   )
 }
 
+function CompletedStepIcon() {
+  return (
+    <div className="relative flex size-12 shrink-0 items-center justify-center rounded-lg bg-[#d1fadf]">
+      <div className="flex size-8 items-center justify-center rounded-full bg-[#a6f4c5]">
+        <img
+          src={BANNER.completedTick}
+          alt=""
+          width={16}
+          height={16}
+          className="size-4"
+          draggable={false}
+          aria-hidden
+        />
+      </div>
+    </div>
+  )
+}
+
+function StepIconBox({
+  icon: Icon,
+  iconImages,
+  tone,
+}: {
+  icon?: LucideIcon
+  iconImages?: { active: string; muted: string }
+  tone: "active" | "muted"
+}) {
+  const imageSrc = iconImages?.[tone]
+
+  return (
+    <div
+      className={cn(
+        "flex size-12 shrink-0 items-center justify-center rounded-lg",
+        tone === "active" ? "bg-[#d1e0ff]" : "bg-[#f2f4f7]"
+      )}
+    >
+      {imageSrc ? (
+        <img
+          src={imageSrc}
+          alt=""
+          width={32}
+          height={32}
+          className="size-8"
+          draggable={false}
+          aria-hidden
+        />
+      ) : Icon ? (
+        <Icon
+          className={cn(
+            "size-8",
+            tone === "active" ? "text-[#004eeb]" : "text-[#475467]"
+          )}
+          strokeWidth={1.75}
+          aria-hidden
+        />
+      ) : null}
+    </div>
+  )
+}
+
 function StepCard({
+  status,
   title,
   action,
   actionEnabled,
-  preview,
+  icon,
+  iconImages,
   showConnector = false,
-}: (typeof steps)[number] & { showConnector?: boolean }) {
+  onAction,
+}: {
+  status: OnboardingStepStatus
+  title: string
+  action?: string
+  actionEnabled: boolean
+  icon?: LucideIcon
+  iconImages?: { active: string; muted: string }
+  showConnector?: boolean
+  onAction: () => void
+}) {
+  const isCompleted = status === "completed"
+  const iconTone = status === "pending" ? "muted" : "active"
+  const showAction = !isCompleted && action
+
   return (
-    <div className="relative w-[280px] shrink-0">
-      <div className="flex h-[88px] w-full gap-3 overflow-hidden rounded-lg bg-white py-2 pl-2 pr-3">
-        {preview}
-        <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
-          <p className="text-sm font-medium leading-5 text-[#101828]">{title}</p>
-          <button
-            type="button"
-            disabled={!actionEnabled}
-            className={cn(
-              "self-start text-sm font-semibold leading-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155eef]/40",
-              actionEnabled
-                ? "text-[#004eeb] hover:underline"
-                : "cursor-not-allowed text-[#b2ccff]"
-            )}
-          >
-            {action}
-          </button>
+    <div className="relative min-w-0 flex-1">
+      <div className="flex w-full items-center gap-2 rounded-lg bg-white py-2 pl-2 pr-3">
+        {isCompleted ? (
+          <CompletedStepIcon />
+        ) : (
+          <StepIconBox icon={icon} iconImages={iconImages} tone={iconTone} />
+        )}
+        <div
+          className={cn(
+            "flex min-w-0 flex-1 flex-col",
+            showAction ? "gap-1" : "justify-center"
+          )}
+        >
+          <p className="line-clamp-2 text-sm font-medium leading-5 text-[#101828]">
+            {title}
+          </p>
+          {showAction ? (
+            <button
+              type="button"
+              disabled={!actionEnabled}
+              onClick={onAction}
+              className={cn(
+                "self-start text-sm font-semibold leading-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155eef]/40",
+                actionEnabled
+                  ? "text-[#004eeb] hover:underline"
+                  : "cursor-not-allowed text-[#b2ccff]"
+              )}
+            >
+              {action}
+            </button>
+          ) : null}
         </div>
       </div>
       {showConnector ? <StepConnector /> : null}
@@ -83,32 +194,96 @@ function StepCard({
 }
 
 export function OnboardingBanner() {
+  const router = useRouter()
+  const { isConnected } = useIntegrationStatus()
+  const [productsCount, setProductsCount] = useState(0)
+
+  const connectedCount = INTEGRATIONS.reduce(
+    (count, item) => (isConnected(item.id) ? count + 1 : count),
+    0
+  )
+
+  const syncProductsCount = useCallback(() => {
+    setProductsCount(getOnboardingProductsCount())
+  }, [])
+
+  useEffect(() => {
+    syncProductsCount()
+    window.addEventListener("onboarding-progress-change", syncProductsCount)
+    window.addEventListener("storage", syncProductsCount)
+    return () => {
+      window.removeEventListener("onboarding-progress-change", syncProductsCount)
+      window.removeEventListener("storage", syncProductsCount)
+    }
+  }, [syncProductsCount])
+
+  const providersDone = connectedCount > 0
+  const productsDone = productsCount > 0
+
+  const statuses = STEP_DEFINITIONS.map((step) =>
+    resolveOnboardingStepStatus(step.id, { providersDone, productsDone })
+  )
+
+  const getStepTitle = (step: StepDefinition, index: number) => {
+    if (statuses[index] === "completed") return step.completedTitle
+    return step.pendingTitle
+  }
+
+  const isStepActionEnabled = (index: number) => statuses[index] === "active"
+
+  const handleStepAction = (step: StepDefinition, index: number) => {
+    if (statuses[index] !== "active") return
+
+    if (step.id === "connect") {
+      router.push("/integrations?status=all")
+      return
+    }
+
+    if (step.id === "product") {
+      incrementOnboardingProducts()
+      return
+    }
+
+    if (step.id === "link") {
+      window.open(
+        "https://help.gohighlevel.com/support/solutions/articles/48000980323-stripe-integration",
+        "_blank",
+        "noopener,noreferrer"
+      )
+    }
+  }
+
   return (
     <section
       aria-label="Accept your first payment"
-      className="w-full shrink-0 rounded bg-[#eff4ff] py-3 pl-4 pr-3"
+      className="w-full shrink-0 overflow-hidden rounded bg-[#eff4ff]"
     >
-      <div className="flex w-full flex-col items-start gap-8 xl:flex-row xl:items-center xl:justify-between">
-        <div className="w-full max-w-[252px] shrink-0 xl:max-w-[440px]">
-          <h2 className="text-base font-semibold leading-6 text-[#101828]">
+      <div className="flex w-full min-w-0 items-center gap-4 p-4 sm:gap-8">
+        <div className="shrink">
+          <h2 className="font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-[#101828]">
             Accept your first payment
           </h2>
-          <p className="mt-0.5 text-sm leading-5 text-[#475467] xl:whitespace-nowrap">
+          <p className="mt-0.5 font-[family-name:var(--font-inter)] text-sm leading-5 text-[#475467]">
             Set up your provider and start getting paid in just 3 simple steps.
           </p>
         </div>
 
-        {/* Figma 2147:38993 — equal-width cards, 12px gap, chevrons overlap the gap */}
-        <div className="w-full min-w-0 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] xl:w-auto xl:shrink-0 [&::-webkit-scrollbar]:hidden">
-          <div className="ml-auto flex min-w-max items-start gap-3 xl:ml-0">
-            {steps.map((step, index) => (
-              <StepCard
-                key={step.id}
-                {...step}
-                showConnector={index < steps.length - 1}
-              />
-            ))}
-          </div>
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          {STEP_DEFINITIONS.map((step, index) => (
+            <StepCard
+              key={step.id}
+              status={statuses[index]}
+              title={getStepTitle(step, index)}
+              action={
+                statuses[index] === "completed" ? undefined : step.pendingAction
+              }
+              actionEnabled={isStepActionEnabled(index)}
+              icon={step.icon}
+              iconImages={step.iconImages}
+              showConnector={index < STEP_DEFINITIONS.length - 1}
+              onAction={() => handleStepAction(step, index)}
+            />
+          ))}
         </div>
       </div>
     </section>
