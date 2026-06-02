@@ -155,8 +155,8 @@ function StepCard({
   const showAction = !isCompleted && action
 
   return (
-    <div className="relative min-w-0 flex-1">
-      <div className="flex w-full items-center gap-2 rounded-lg bg-white py-2 pl-2 pr-3">
+    <div className="relative flex h-full min-w-0 flex-1 shrink">
+      <div className="flex h-full w-full items-center gap-2 rounded-lg bg-white py-2 pl-2 pr-3">
         {isCompleted ? (
           <CompletedStepIcon />
         ) : (
@@ -168,7 +168,7 @@ function StepCard({
             showAction ? "gap-1" : "justify-center"
           )}
         >
-          <p className="line-clamp-2 text-sm font-medium leading-5 text-[#101828]">
+          <p className="line-clamp-2 text-pretty text-sm font-medium leading-5 text-[#101828]">
             {title}
           </p>
           {showAction ? (
@@ -259,16 +259,16 @@ export function OnboardingBanner() {
       className="w-full shrink-0 overflow-hidden rounded bg-[#eff4ff]"
     >
       <div className="flex w-full min-w-0 items-center gap-4 p-4 sm:gap-8">
-        <div className="shrink">
-          <h2 className="font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-[#101828]">
+        <div className="min-w-0 flex-[1_1_0] shrink-[2]">
+          <h2 className="font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-pretty text-[#101828]">
             Accept your first payment
           </h2>
-          <p className="mt-0.5 font-[family-name:var(--font-inter)] text-sm leading-5 text-[#475467]">
+          <p className="mt-0.5 font-[family-name:var(--font-inter)] text-sm leading-5 text-pretty text-[#475467]">
             Set up your provider and start getting paid in just 3 simple steps.
           </p>
         </div>
 
-        <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div className="flex min-w-0 flex-[1.75_1_0] shrink items-stretch gap-3 self-stretch">
           {STEP_DEFINITIONS.map((step, index) => (
             <StepCard
               key={step.id}
