@@ -148,14 +148,18 @@ function TableRow({ item }: { item: IntegrationItem }) {
   const hasSettings = providerHasSettings(item.id)
   const ctaHref = getIntegrationCtaHref(item.id, connected)
   const ctaLabel = connected ? "Manage" : "Connect"
-  const ctaClassName =
-    "rounded border-[#d0d5dd] bg-white px-2.5 text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.05)] hover:border-[#84adff] hover:bg-white hover:text-[#004eeb]"
+  const ctaClassName = cn(
+    "rounded border border-[#d0d5dd] bg-white px-2.5 text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors",
+    "hover:border-[#84adff] hover:bg-white hover:text-[#004eeb]",
+    "group-hover:border-[#84adff] group-hover:bg-white group-hover:text-[#004eeb]"
+  )
 
   return (
     <div
       className={cn(
         TABLE_COLUMNS,
-        "group [--card-surface-color:white] transition-colors hover:bg-[#f5f8ff] hover:[--card-surface-color:#f5f8ff]"
+        "group [--card-surface-color:white] transition-colors hover:bg-[#f5f8ff] hover:[--card-surface-color:#f5f8ff]",
+        "hover:[&_[data-slot=button]]:border-[#84adff] hover:[&_[data-slot=button]]:bg-white hover:[&_[data-slot=button]]:text-[#004eeb]"
       )}
     >
       <div className="flex h-16 w-full items-center border-b border-[#d0d5dd] px-3 py-2">

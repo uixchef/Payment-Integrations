@@ -22,16 +22,17 @@ export function IntegrationCard({ item }: { item: IntegrationItem }) {
   const ctaLabel = connected ? "Manage" : "Connect"
 
   const ctaClassName = cn(
-    "w-full rounded border-[#d0d5dd] bg-white px-2.5 text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors",
-    "group-hover:border-[#84adff] group-hover:bg-white group-hover:text-[#004eeb]",
-    "hover:border-[#84adff] hover:bg-white hover:text-[#004eeb]"
+    "w-full rounded border border-[#d0d5dd] bg-white px-2.5 text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors",
+    "hover:border-[#84adff] hover:bg-white hover:text-[#004eeb]",
+    "group-hover:border-[#84adff] group-hover:bg-white group-hover:text-[#004eeb]"
   )
 
   return (
     <article
       className={cn(
         "group flex w-full flex-col rounded border border-[#d0d5dd] bg-white shadow-[0_1px_1.5px_rgba(16,24,40,0.1),0_1px_1px_rgba(16,24,40,0.06)] transition-colors",
-        "[--card-surface-color:white] hover:border-[#84adff] hover:bg-[#f5f8ff] hover:[--card-surface-color:#f5f8ff]"
+        "[--card-surface-color:white] hover:border-[#84adff] hover:bg-[#f5f8ff] hover:[--card-surface-color:#f5f8ff]",
+        "hover:[&_[data-slot=button]]:border-[#84adff] hover:[&_[data-slot=button]]:bg-white hover:[&_[data-slot=button]]:text-[#004eeb]"
       )}
     >
       <div className="px-4 pt-4">

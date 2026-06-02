@@ -116,7 +116,7 @@ export function PayPalPaymentMethodsShell({ item }: { item: IntegrationItem }) {
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[12px] bg-white shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)]">
-          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-4">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden p-4">
             <StripePaymentMethodsToolbar
               environment={environment}
               onEnvironmentChange={setEnvironment}

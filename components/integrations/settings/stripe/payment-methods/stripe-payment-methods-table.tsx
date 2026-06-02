@@ -27,7 +27,7 @@ import {
 
 const HEADER_CELL =
   "flex h-9 items-center border-b border-[#d0d5dd] bg-[#f2f4f7] px-3"
-const BODY_CELL = "flex h-9 items-center border-b border-[#d0d5dd] px-3"
+const BODY_CELL = "flex h-11 items-center border-b border-[#d0d5dd] px-3"
 
 function HeaderCell({
   icon,
@@ -264,9 +264,8 @@ export function StripePaymentMethodsTable({
   onFilterApply: (filterId: PmcFilterType, ids: string[]) => void
 }) {
   return (
-    <div className="overflow-hidden rounded border border-[#d0d5dd]">
-      <div className="max-h-[576px] overflow-auto">
-        <div className="min-w-[760px]">
+    <div className="overflow-x-auto rounded border border-[#d0d5dd]">
+      <div className="min-w-[760px]">
           <div className="sticky top-0 z-10 grid grid-cols-[minmax(220px,1.15fr)_minmax(180px,0.85fr)_minmax(280px,1.5fr)_140px]">
             <HeaderCell
               icon={<TableHeaderIcon variant="payment-methods" />}
@@ -327,7 +326,6 @@ export function StripePaymentMethodsTable({
               }
             />
           ))}
-        </div>
       </div>
     </div>
   )

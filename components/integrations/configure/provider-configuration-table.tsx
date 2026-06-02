@@ -83,7 +83,7 @@ function ProviderCell({
   ) : null
 
   return (
-    <div className="flex h-9 items-center gap-1 border-b border-[#d0d5dd] px-3">
+    <div className="flex h-11 items-center gap-1 border-b border-[#d0d5dd] px-3">
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
         {assignedProviders.map((providerId) => (
           <ProviderTag
@@ -113,7 +113,7 @@ export function ProviderConfigurationTable({
 
         {channels.map((channel) => (
           <div key={channel.id} className="contents">
-            <div className="flex h-9 items-center border-b border-[#d0d5dd] px-3">
+            <div className="flex h-11 items-center border-b border-[#d0d5dd] px-3">
               <span className="truncate font-[family-name:var(--font-inter)] text-base font-medium leading-6 text-[#475467]">
                 {channel.name}
               </span>
