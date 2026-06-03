@@ -228,7 +228,7 @@ export function StepReviewSelect({
         <div className="shrink-0 pt-3">
           <InfoBanner
             title="Contacts associated with selected subscriptions."
-            description="Matched contacts already exist in HighLevel. New contacts will be created. Saved card references are shown alongside each contact."
+            description="Matched contacts already exist in the platform. New contacts will be created. Saved card references are shown alongside each contact."
             onDismiss={() => setBannerDismissed(true)}
           />
         </div>

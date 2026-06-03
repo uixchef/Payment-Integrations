@@ -17,6 +17,8 @@ const buttonVariants = cva(
           "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 disabled:opacity-50",
         neutral:
           "rounded border border-[#d0d5dd] bg-white text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.05)] hover:border-[#d0d5dd] hover:bg-[#f9fafb] hover:text-[#344054] focus-visible:ring-2 focus-visible:ring-[#84adff] disabled:border-[#eaecf0] disabled:bg-white disabled:text-[#98a2b3] disabled:opacity-100 disabled:shadow-none",
+        soft:
+          "rounded border border-[#f9fafb] bg-[#f9fafb] text-[#475467] shadow-none hover:border-[#f2f4f7] hover:bg-[#f2f4f7] hover:text-[#344054] active:border-[#eaecf0] active:bg-[#eaecf0] focus-visible:ring-2 focus-visible:ring-[#84adff] disabled:border-[#f9fafb] disabled:bg-[#f9fafb] disabled:text-[#98a2b3] disabled:opacity-100",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50",
         ghost:

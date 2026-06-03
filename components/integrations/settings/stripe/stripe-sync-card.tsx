@@ -1,16 +1,19 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { ArrowRight, CheckCircle2, PieChart, RefreshCw } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import {
+  computeStripeSyncProgress,
   formatLastSyncLabel,
+  getCompletedSummaryRows,
   type StripeSyncCompleted,
   type StripeSyncInProgress,
   type StripeSyncState,
@@ -87,13 +90,118 @@ function SyncProgressRow({
       <div className="flex h-4 items-center">
         <div className="relative h-2 w-full overflow-hidden rounded-full bg-[#eaecf0]">
           <div
-            className="absolute inset-y-0 left-0 rounded-full bg-[#039855] transition-[width] duration-700 ease-out"
+            className="absolute inset-y-0 left-0 rounded-full bg-[#039855] transition-[width] duration-500 ease-out"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
       </div>
     </div>
   )
+}
+
+function useLiveStripeSyncProgress(
+  progress: StripeSyncInProgress
+): StripeSyncInProgress {
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    setNow(Date.now())
+    const timer = window.setInterval(() => setNow(Date.now()), 400)
+    return () => window.clearInterval(timer)
+  }, [progress.startedAt])
+
+  return useMemo(
+    () =>
+      computeStripeSyncProgress(
+        progress.summary,
+        progress.startedAt,
+        now
+      ),
+    [progress.summary, progress.startedAt, now]
+  )
+}
+
+const SYNC_STATUS_COMPLETE = "text-[#027a48]"
+const SYNC_STATUS_PENDING = "text-[#b54708]"
+const SYNC_STATUS_MUTED = "text-[#667085]"
+
+function SyncCount({ value }: { value: number }) {
+  return <span className="font-medium text-[#101828]">{value}</span>
+}
+
+function formatInProgressSyncStatus({
+  synced,
+  pending,
+  completeLabel,
+}: {
+  synced: number
+  pending: number
+  completeLabel: string
+}): React.ReactNode {
+  if (pending <= 0) {
+    return (
+      <>
+        <SyncCount value={synced} />
+        {" synced · "}
+        <span className={SYNC_STATUS_COMPLETE}>{completeLabel}</span>
+      </>
+    )
+  }
+  return (
+    <>
+      <SyncCount value={synced} />
+      {" synced · "}
+      <span className={SYNC_STATUS_PENDING}>{pending} pending</span>
+    </>
+  )
+}
+
+function formatSubscriptionSyncStatus(
+  row: StripeSyncInProgress["subscriptions"]
+): React.ReactNode {
+  if (row.total === 0) {
+    return <span className={SYNC_STATUS_MUTED}>Nothing to sync</span>
+  }
+  return formatInProgressSyncStatus({
+    synced: row.synced,
+    pending: row.pending,
+    completeLabel: "all synced",
+  })
+}
+
+function formatContactSyncStatus(
+  row: StripeSyncInProgress["customers"]
+): React.ReactNode {
+  if (row.total === 0) {
+    return <span className={SYNC_STATUS_MUTED}>Nothing to sync</span>
+  }
+  return formatInProgressSyncStatus({
+    synced: row.synced,
+    pending: Math.max(row.total - row.synced, 0),
+    completeLabel: "all matched",
+  })
+}
+
+function formatPaymentMethodSyncStatus(
+  row: StripeSyncInProgress["paymentMethods"]
+): React.ReactNode {
+  if (row.total === 0) {
+    return <span className={SYNC_STATUS_MUTED}>Nothing to sync</span>
+  }
+  if (row.errors > 0) {
+    return (
+      <>
+        <SyncCount value={row.synced} />
+        {" synced · "}
+        <span className={SYNC_STATUS_PENDING}>{row.errors} errors</span>
+      </>
+    )
+  }
+  return formatInProgressSyncStatus({
+    synced: row.synced,
+    pending: Math.max(row.total - row.synced, 0),
+    completeLabel: "all synced",
+  })
 }
 
 function SyncSummaryRow({
@@ -172,17 +280,18 @@ function StripeSyncInProgressCard({
 }: {
   progress: StripeSyncInProgress
 }) {
+  const liveProgress = useLiveStripeSyncProgress(progress)
   const [lastSyncLabel, setLastSyncLabel] = useState(() =>
-    formatLastSyncLabel(progress.startedAt)
+    formatLastSyncLabel(liveProgress.startedAt)
   )
 
   useEffect(() => {
-    setLastSyncLabel(formatLastSyncLabel(progress.startedAt))
+    setLastSyncLabel(formatLastSyncLabel(liveProgress.startedAt))
     const timer = window.setInterval(() => {
-      setLastSyncLabel(formatLastSyncLabel(progress.startedAt))
+      setLastSyncLabel(formatLastSyncLabel(liveProgress.startedAt))
     }, 30_000)
     return () => window.clearInterval(timer)
-  }, [progress.startedAt])
+  }, [liveProgress.startedAt])
 
   return (
     <aside
@@ -210,44 +319,20 @@ function StripeSyncInProgressCard({
 
       <SyncProgressRow
         label="Subscriptions"
-        progressPercent={progress.subscriptions.progressPercent}
-        status={
-          <>
-            <span className="font-medium text-[#101828]">
-              {progress.subscriptions.synced}
-            </span>
-            {" synced · "}
-            <span className="text-[#b54708]">
-              {progress.subscriptions.pending} pending
-            </span>
-          </>
-        }
+        progressPercent={liveProgress.subscriptions.progressPercent}
+        status={formatSubscriptionSyncStatus(liveProgress.subscriptions)}
       />
 
       <SyncProgressRow
         label="Contacts"
-        progressPercent={progress.customers.progressPercent}
-        status={
-          <>
-            <span className="font-medium text-[#101828]">
-              {progress.customers.synced}
-            </span>
-            {" synced · all matched"}
-          </>
-        }
+        progressPercent={liveProgress.customers.progressPercent}
+        status={formatContactSyncStatus(liveProgress.customers)}
       />
 
       <SyncProgressRow
         label="Payment methods"
-        progressPercent={progress.paymentMethods.progressPercent}
-        status={
-          <>
-            <span className="font-medium text-[#101828]">
-              {progress.paymentMethods.synced}
-            </span>
-            {` synced · ${progress.paymentMethods.errors} errors`}
-          </>
-        }
+        progressPercent={liveProgress.paymentMethods.progressPercent}
+        status={formatPaymentMethodSyncStatus(liveProgress.paymentMethods)}
       />
 
     </aside>
@@ -263,6 +348,10 @@ function StripeSyncCompletedCard({
   onResync: () => void
   onViewDetails: () => void
 }) {
+  const summaryRows = useMemo(
+    () => getCompletedSummaryRows(completed),
+    [completed]
+  )
   const [lastSyncLabel, setLastSyncLabel] = useState(() =>
     formatLastSyncLabel(completed.completedAt)
   )
@@ -299,47 +388,31 @@ function StripeSyncCompletedCard({
       </div>
 
       <div className="flex w-full flex-col overflow-hidden rounded border border-[#eaecf0]">
-        <SyncSummaryRow
-          label="Subscriptions"
-          count={completed.subscriptions.total}
-          tag={<SyncStatusTag variant="success">All synced</SyncStatusTag>}
-          showDivider
-        />
-        <SyncSummaryRow
-          label="Contacts"
-          count={completed.customers.total}
-          tag={<SyncStatusTag variant="success">All matched</SyncStatusTag>}
-          showDivider
-        />
-        <SyncSummaryRow
-          label="Payment methods"
-          count={completed.paymentMethods.total}
-          tag={
-            completed.paymentMethods.pending > 0 ? (
-              <SyncStatusTag variant="warning">
-                {completed.paymentMethods.pending} pending - retry
+        {summaryRows.map((row, index) => (
+          <SyncSummaryRow
+            key={row.label}
+            label={row.label}
+            count={row.count}
+            tag={
+              <SyncStatusTag variant={row.tag.variant}>
+                {row.tag.label}
               </SyncStatusTag>
-            ) : (
-              <SyncStatusTag variant="success">All synced</SyncStatusTag>
-            )
-          }
-        />
+            }
+            showDivider={index < summaryRows.length - 1}
+          />
+        ))}
       </div>
 
       <div className="flex w-full flex-col gap-2">
-        <button
+        <Button
           type="button"
+          variant="soft"
           onClick={onResync}
-          className={cn(
-            "inline-flex h-9 w-full items-center justify-center gap-2 rounded border border-[#f9fafb]",
-            "bg-[#f9fafb] px-3.5 py-2 font-[family-name:var(--font-inter)] text-base font-semibold leading-6",
-            "text-[#475467] outline-none transition-colors",
-            "hover:bg-[#f2f4f7] focus-visible:ring-2 focus-visible:ring-[#84adff]"
-          )}
+          className="w-full px-3.5 [&_svg]:size-5"
         >
-          <RefreshCw className="size-5" strokeWidth={2} aria-hidden />
+          <RefreshCw strokeWidth={2} aria-hidden />
           Re-sync
-        </button>
+        </Button>
         <button
           type="button"
           onClick={onViewDetails}

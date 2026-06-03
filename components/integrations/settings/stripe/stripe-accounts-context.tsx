@@ -9,6 +9,7 @@ import {
   type StripeSyncDraft,
 } from "@/components/integrations/settings/stripe/sync/stripe-sync-draft"
 import {
+  computeStripeSyncProgress,
   createStripeSyncCompleted,
   createStripeSyncProgress,
   STRIPE_SYNC_COMPLETE_DELAY_MS,
@@ -220,8 +221,13 @@ export function StripeAccountsProvider({
   const getAccountSyncState = React.useCallback<
     StripeAccountsContextValue["getAccountSyncState"]
   >(
-    (accountId) =>
-      accountId ? (syncProgressByAccountId[accountId] ?? null) : null,
+    (accountId) => {
+      const state = accountId ? (syncProgressByAccountId[accountId] ?? null) : null
+      if (state?.status === "in-progress") {
+        return computeStripeSyncProgress(state.summary, state.startedAt)
+      }
+      return state
+    },
     [syncProgressByAccountId]
   )
 

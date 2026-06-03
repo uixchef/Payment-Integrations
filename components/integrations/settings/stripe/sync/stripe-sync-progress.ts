@@ -66,88 +66,223 @@ export type StripeSyncState =
 /** Mock background import duration before the settings card moves to completed. */
 export const STRIPE_SYNC_COMPLETE_DELAY_MS = 10_000
 
-export function createStripeSyncProgress(
-  summary: StripeSyncSummaryInput
-): StripeSyncInProgress {
-  const subPending =
-    summary.subscriptions > 0
-      ? Math.min(2, Math.max(1, Math.round(summary.subscriptions * 0.04)))
-      : 0
-  const subSynced = Math.max(summary.subscriptions - subPending, 0)
-  const subProgress =
-    summary.subscriptions > 0
-      ? Math.round((subSynced / summary.subscriptions) * 100)
-      : 0
+function smoothstep(value: number): number {
+  const t = Math.max(0, Math.min(1, value))
+  return t * t * (3 - 2 * t)
+}
 
-  const pmSynced =
-    summary.paymentMethods > 0
-      ? Math.max(1, Math.round(summary.paymentMethods * 0.3))
-      : 0
-  const pmProgress =
-    summary.paymentMethods > 0
-      ? Math.round((pmSynced / summary.paymentMethods) * 100)
-      : 0
+function phaseProgress(
+  elapsedRatio: number,
+  start: number,
+  end: number
+): number {
+  if (elapsedRatio <= start) return 0
+  if (elapsedRatio >= end) return 1
+  return smoothstep((elapsedRatio - start) / (end - start))
+}
+
+function pendingSubscriptionsAtCompletion(total: number): number {
+  if (total <= 0) return 0
+  return Math.min(2, Math.max(1, Math.round(total * 0.04)))
+}
+
+function pendingPaymentMethodsAtCompletion(total: number): number {
+  if (total <= 0) return 0
+  return Math.min(2, Math.max(1, Math.round(total * 0.17)))
+}
+
+export type CompletedSummaryTag = {
+  variant: "success" | "warning"
+  label: string
+}
+
+export type CompletedSummaryRow = {
+  label: string
+  count: number
+  tag: CompletedSummaryTag
+}
+
+function subscriptionCompletedTag(
+  results: StripeSyncResultBreakdown,
+  total: number
+): CompletedSummaryTag {
+  if (total === 0) return { variant: "success", label: "Nothing to sync" }
+  if (results.error > 0) {
+    return { variant: "warning", label: `${results.error} errors - retry` }
+  }
+  if (results.pending > 0) {
+    return { variant: "warning", label: `${results.pending} pending - retry` }
+  }
+  return { variant: "success", label: "All synced" }
+}
+
+function contactCompletedTag(
+  results: StripeSyncResultBreakdown,
+  total: number
+): CompletedSummaryTag {
+  if (total === 0) return { variant: "success", label: "Nothing to sync" }
+  if (results.error > 0) {
+    return { variant: "warning", label: `${results.error} errors - retry` }
+  }
+  if (results.pending > 0) {
+    return { variant: "warning", label: `${results.pending} pending - retry` }
+  }
+  return { variant: "success", label: "All matched" }
+}
+
+function paymentMethodCompletedTag(
+  results: StripeSyncResultBreakdown,
+  total: number,
+  pendingFallback: number
+): CompletedSummaryTag {
+  if (total === 0) return { variant: "success", label: "Nothing to sync" }
+  if (results.error > 0) {
+    return { variant: "warning", label: `${results.error} errors - retry` }
+  }
+  if (results.pendingNil) {
+    return { variant: "warning", label: "Pending review" }
+  }
+  const pending = results.pending > 0 ? results.pending : pendingFallback
+  if (pending > 0) {
+    return { variant: "warning", label: `${pending} pending - retry` }
+  }
+  return { variant: "success", label: "All synced" }
+}
+
+/** Maps a completed sync snapshot into settings-card summary rows. */
+export function getCompletedSummaryRows(
+  completed: StripeSyncCompleted
+): CompletedSummaryRow[] {
+  const { summary, results, paymentMethods } = completed
+
+  return [
+    {
+      label: "Subscriptions",
+      count: summary.subscriptions,
+      tag: subscriptionCompletedTag(results.subscriptions, summary.subscriptions),
+    },
+    {
+      label: "Contacts",
+      count: summary.contacts,
+      tag: contactCompletedTag(results.customers, summary.contacts),
+    },
+    {
+      label: "Payment methods",
+      count: summary.paymentMethods,
+      tag: paymentMethodCompletedTag(
+        results.paymentMethods,
+        summary.paymentMethods,
+        paymentMethods.pending
+      ),
+    },
+  ]
+}
+
+/** Derives live in-progress counts from elapsed time since sync started. */
+export function computeStripeSyncProgress(
+  summary: StripeSyncSummaryInput,
+  startedAt: number,
+  now = Date.now()
+): StripeSyncInProgress {
+  const elapsedRatio = Math.min(
+    Math.max(0, now - startedAt) / STRIPE_SYNC_COMPLETE_DELAY_MS,
+    1
+  )
+
+  const subTotal = summary.subscriptions
+  const contactsTotal = summary.contacts
+  const pmTotal = summary.paymentMethods
+
+  const subPendingFinal = pendingSubscriptionsAtCompletion(subTotal)
+  const subSyncedFinal = Math.max(subTotal - subPendingFinal, 0)
+
+  const contactsT = phaseProgress(elapsedRatio, 0, 0.42)
+  const subscriptionsT = phaseProgress(elapsedRatio, 0.12, 0.72)
+  const paymentMethodsT = phaseProgress(elapsedRatio, 0.38, 1)
+
+  const contactsSynced = Math.round(contactsTotal * contactsT)
+  const subSynced = Math.round(subSyncedFinal * subscriptionsT)
+  const subPending = Math.max(subTotal - subSynced, 0)
+  const pmSynced = Math.round(pmTotal * paymentMethodsT)
 
   return {
     status: "in-progress",
-    startedAt: Date.now(),
+    startedAt,
     summary,
     subscriptions: {
       synced: subSynced,
-      total: summary.subscriptions,
+      total: subTotal,
       pending: subPending,
-      progressPercent: subProgress,
+      progressPercent:
+        subTotal > 0 ? Math.round((subSynced / subTotal) * 100) : 0,
     },
     customers: {
-      synced: summary.contacts,
-      total: summary.contacts,
-      progressPercent: summary.contacts > 0 ? 80 : 0,
+      synced: contactsSynced,
+      total: contactsTotal,
+      progressPercent:
+        contactsTotal > 0
+          ? Math.round((contactsSynced / contactsTotal) * 100)
+          : 0,
     },
     paymentMethods: {
       synced: pmSynced,
-      total: summary.paymentMethods,
+      total: pmTotal,
       errors: 0,
-      progressPercent: pmProgress,
+      progressPercent:
+        pmTotal > 0 ? Math.round((pmSynced / pmTotal) * 100) : 0,
     },
   }
+}
+
+export function createStripeSyncProgress(
+  summary: StripeSyncSummaryInput
+): StripeSyncInProgress {
+  const startedAt = Date.now()
+  return computeStripeSyncProgress(summary, startedAt, startedAt)
 }
 
 export function createStripeSyncCompleted(
   from: StripeSyncInProgress
 ): StripeSyncCompleted {
-  const subPending = from.subscriptions.pending
-  const paymentPending =
-    from.summary.paymentMethods > 0
-      ? Math.min(2, Math.max(1, Math.round(from.summary.paymentMethods * 0.17)))
-      : 0
+  const { summary, startedAt } = from
+  const final = computeStripeSyncProgress(
+    summary,
+    startedAt,
+    startedAt + STRIPE_SYNC_COMPLETE_DELAY_MS
+  )
+
+  const subPending = final.subscriptions.pending
+  const subSynced = Math.max(summary.subscriptions - subPending, 0)
+  const pmPending = pendingPaymentMethodsAtCompletion(summary.paymentMethods)
+  const pmSynced = Math.max(summary.paymentMethods - pmPending, 0)
 
   return {
     status: "completed",
-    startedAt: from.startedAt,
+    startedAt,
     completedAt: Date.now(),
-    summary: from.summary,
-    subscriptions: { total: from.summary.subscriptions },
-    customers: { total: from.summary.contacts },
+    summary,
+    subscriptions: { total: summary.subscriptions },
+    customers: { total: summary.contacts },
     paymentMethods: {
-      total: from.summary.paymentMethods,
-      pending: paymentPending,
+      total: summary.paymentMethods,
+      pending: pmPending,
     },
     results: {
       subscriptions: {
-        synced: from.summary.subscriptions,
+        synced: subSynced,
         pending: subPending,
         error: 0,
       },
       customers: {
-        synced: from.summary.contacts,
+        synced: summary.contacts,
         pending: 0,
         error: 0,
       },
       paymentMethods: {
-        synced: from.summary.paymentMethods,
-        pending: 0,
+        synced: pmSynced,
+        pending: pmPending,
         error: 0,
-        pendingNil: from.summary.paymentMethods > 0,
+        pendingNil: false,
       },
     },
   }

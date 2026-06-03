@@ -224,18 +224,20 @@ export function InfoBanner({
   return (
     <div
       role="status"
-      className="flex items-start gap-2 rounded-[4px] bg-[#fcfcfd] p-2"
+      className="flex items-start gap-2 rounded-[4px] bg-[#f9fafb] p-2"
     >
       <span className="flex shrink-0 items-center py-1">
         <Info className="size-5 text-[#475467]" strokeWidth={1.75} aria-hidden />
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-[#344054]">
-          {title}
-        </p>
-        <p className="font-[family-name:var(--font-inter)] text-sm font-normal leading-5 text-[#475467]">
-          {description}
-        </p>
+        <div className="flex w-full flex-col gap-0.5">
+          <p className="font-[family-name:var(--font-inter)] text-base font-semibold leading-6 text-[#344054]">
+            {title}
+          </p>
+          <p className="font-[family-name:var(--font-inter)] text-sm font-normal leading-5 text-[#475467]">
+            {description}
+          </p>
+        </div>
       </div>
       {onDismiss ? (
         <button
